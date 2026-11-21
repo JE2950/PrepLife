@@ -10,10 +10,25 @@
   let scrollBottom = true;
 
   const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // In the iOS app, saves go to native storage via the "store" handler; on the web, localStorage.
+  const NATIVE = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.store);
+  const nativeData = window.__NATIVE_STORE || {};
   const store = {
-    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } },
-    del(k) { try { localStorage.removeItem(k); } catch (e) { } },
+    get(k) {
+      try { return JSON.parse(NATIVE ? (nativeData[k] == null ? 'null' : nativeData[k]) : localStorage.getItem(k)); } catch (e) { return null; }
+    },
+    set(k, v) {
+      const s = JSON.stringify(v);
+      if (NATIVE) { nativeData[k] = s; try { window.webkit.messageHandlers.store.postMessage({ k, v: s }); } catch (e) { } return; }
+      try { localStorage.setItem(k, s); } catch (e) { }
+    },
+    del(k) {
+      if (NATIVE) { delete nativeData[k]; try { window.webkit.messageHandlers.store.postMessage({ k }); } catch (e) { } return; }
+      try { localStorage.removeItem(k); } catch (e) { }
+    },
+  };
+  const haptic = kind => {
+    try { if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.haptic) window.webkit.messageHandlers.haptic.postMessage(kind || 'light'); else if (navigator.vibrate) navigator.vibrate(12); } catch (e) { }
   };
   const save = () => { if (S) store.set(SAVE, S); };
   const barColour = v => v >= 60 ? 'var(--good)' : v >= 30 ? 'var(--mid)' : 'var(--bad)';
@@ -48,7 +63,7 @@
       <div id="blurb" style="font-size:12.5px;opacity:.75;margin-top:6px;min-height:34px"></div>
       <button class="btn" id="go">Start a career</button>
       <button class="btn ghost" id="rand">Random teacher</button>
-      <p style="font-size:12px;opacity:.55;text-align:center;margin-top:18px">v1.0 · ${D.events.length} events · 4 schools<br>On iPhone: open in Safari, tap Share, then Add to Home Screen.</p>
+      <p style="font-size:12px;opacity:.55;text-align:center;margin-top:18px">v1.1 · ${D.events.length} events · 4 schools${NATIVE ? '' : '<br>On iPhone: open in Safari, tap Share, then Add to Home Screen.'}</p>
       ${hof.length ? `<h3 style="margin:26px 0 6px">Honours board</h3>${hof.slice(-15).reverse().map(h => `<div class="hof"><span>${esc(h.emoji)} <b>${esc(h.name)}</b><br><small style="opacity:.7">${esc(h.peak)} · ${h.years} yrs · ${esc(h.ending)}</small></span><span style="text-align:right;color:#f1d38a">${esc(h.honour)}</span></div>`).join('')}` : ''}
     </div>`;
     const v = id => document.getElementById(id).value.trim();
@@ -94,7 +109,7 @@
     const j = document.getElementById('journal');
     if (scrollBottom) j.scrollTop = j.scrollHeight;
     $app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { sheet = { tab: b.dataset.tab }; render(); });
-    document.getElementById('next').onclick = () => { try { navigator.vibrate && navigator.vibrate(12); } catch (e) { } if (P.advance(S)) { scrollBottom = true; save(); render(); } };
+    document.getElementById('next').onclick = () => { haptic('light'); if (P.advance(S)) { scrollBottom = true; save(); render(); } };
     document.getElementById('sandbox').onclick = () => { sheet = { tab: 'sandbox' }; render(); };
     if (!S.helpSeen) return showHelp();
     if (sheet) renderSheet();
@@ -103,7 +118,7 @@
   }
 
   function after(res) {
-    if (res && res.text != null && !res.started) result = res;
+    if (res && res.text != null && !res.started) { result = res; const net = (res.fx || []).reduce((a, f) => a + (f.money ? 0 : f.d), 0); haptic(net < 0 ? 'warning' : net > 0 ? 'success' : 'light'); }
     save();
     if (S.over) { sheet = null; result = null; }
     render();

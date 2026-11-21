@@ -1,2 +1,6 @@
 node_modules/
 .DS_Store
+xcuserdata/
+ios/build/
+*.xcuserstate
+DerivedData/

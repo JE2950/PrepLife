@@ -7,4 +7,6 @@ for tag,f in [('ENGINE',['engine.js']),('CONTENT',['content.js']+sorted(x[4:] fo
     assert '</script' not in js
     h=h.replace('/*%s*/'%tag, js)
 pathlib.Path('index.html').write_text(h)
+ios=pathlib.Path('ios/PrepLife/Resources'); ios.mkdir(parents=True, exist_ok=True)
+(ios/'index.html').write_text(h)
 print('built', len(h)//1024, 'KB')
