@@ -4,6 +4,9 @@ A BitLife-style career simulator for prep school teachers. Start as an ECT and t
 
 **Play:** open `index.html` in a browser. On iPhone, open it in Safari, tap Share, then Add to Home Screen. Saves stay in the browser.
 
+## Live mode (desktop)
+On a computer, press **🎮 Live** (or turn it on from the start screen) to walk round your school in a side-on pixel-art view: the quad, chapel, classrooms, common room, Head's study, boarding house, San and playing fields. Activities happen at places (your desk, the kettle, the pews), people live in rooms, events play as scenes, and you ring the bell in the tower to move on a half-term. Controls: ← → walk, Space jump, ↑ doors, E use/talk, N bell, Esc pause, J classic view. All art is drawn in code (`src/live.js`).
+
 ## iPhone app (Swift)
 `ios/PrepLife.xcodeproj` is a native SwiftUI app that bundles the game, so it runs offline with its own icon, haptics and saves kept on the phone.
 

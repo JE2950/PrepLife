@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#18233d">
 <title>Prep School Life</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
 <style>
 :root{
   --navy:#18233d; --navy2:#22304f; --paper:#f7f2e7; --paper2:#efe7d6; --ink:#1d1d1f; --muted:#6b6658;
@@ -135,6 +135,38 @@ h1,h2,h3,.serif{font-family:Fraunces,Georgia,serif;font-weight:700;letter-spacin
 .hof{font-size:13px;border-bottom:1px solid rgba(255,255,255,.15);padding:7px 0;display:flex;justify-content:space-between;gap:8px}
 textarea{width:100%;height:120px;font:12px ui-monospace,monospace;border-radius:8px;border:1px solid var(--line);padding:8px}
 input[type=range]{width:100%}
+/* ---------- Live mode ---------- */
+#live{position:fixed;inset:0;z-index:100;background:#0b1020;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-family:VT323,ui-monospace,monospace;color:#f3ead2}
+#live .lv-hud{order:-1;display:flex;gap:22px;align-items:center;font-size:19px;padding:6px 14px;background:#18233d;border:3px solid #f1d38a;box-shadow:4px 4px 0 #000}
+#live .lv-who b{display:block;font-size:22px;color:#f1d38a}#live .lv-who span{font-size:16px;opacity:.85}
+#live .lv-stats{display:grid;grid-template-columns:repeat(2,150px);gap:3px 14px}
+#live .lv-stat{display:flex;align-items:center;gap:6px;font-size:16px}#live .lv-stat span{width:56px}#live .lv-stat i{flex:1;height:8px;background:#2c3654;border:1px solid #000}#live .lv-stat u{display:block;height:100%}
+#live .lv-meta{display:flex;flex-direction:column;font-size:17px;line-height:1.05}
+#live .lv-stage{position:relative;box-shadow:0 0 0 3px #000,0 0 0 6px #f1d38a,6px 6px 0 6px #000}
+#live canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
+#live .lv-tags{position:absolute;inset:0;pointer-events:none}
+#live .lv-tag{position:absolute;transform:translate(-50%,-100%);background:#18233dee;color:#fff;padding:2px 8px;border:2px solid #f1d38a;font-size:18px;white-space:nowrap}
+#live .lv-room{position:absolute;left:10px;top:8px;background:#000a;color:#f1d38a;padding:1px 8px;font-size:20px}
+#live .lv-ticker{max-width:900px;width:90%;font-size:17px;line-height:1.15;opacity:.9;min-height:4.6em}
+#live .lv-ticker div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#live .lv-ticker div:last-child{color:#f1d38a}
+#live .lv-help{font-size:16px;opacity:.6}
+#live .lv-dlg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0006}
+#live .lv-dlg.on{display:flex}
+#live .lv-box{width:min(560px,80%);max-height:90%;overflow:auto;background:#f7f2e4;color:#1d1d1f;border:4px solid #18233d;box-shadow:6px 6px 0 #000;padding:14px 16px}
+#live .lv-head{display:flex;align-items:center;gap:10px;font-size:26px;color:#18233d}#live .lv-emo{font-size:30px}
+#live .lv-box p{font-size:21px;line-height:1.15;margin:8px 0}
+#live .lv-opts{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+#live .lv-opts button{font:inherit;font-size:20px;text-align:left;padding:5px 10px;background:#e8dfc8;border:2px solid #18233d;color:#18233d;cursor:pointer}
+#live .lv-opts button small{display:block;font-size:15px;opacity:.75}
+#live .lv-opts button.sel{background:#18233d;color:#f1d38a}
+#live .lv-opts button[disabled]{opacity:.4;cursor:default}
+#live .lv-hint{font-size:15px;opacity:.55;margin-top:8px}
+#live .lv-chips{display:flex;flex-wrap:wrap;gap:6px}#live .lv-chip{font-size:17px;padding:0 6px;border:2px solid currentColor}#live .lv-chip.up{color:#2f7d45}#live .lv-chip.dn{color:#b0413e}
+#live .lv-card{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;opacity:0;pointer-events:none;text-shadow:3px 3px 0 #000}
+#live .lv-card b{display:block;font-size:44px;color:#f1d38a}#live .lv-card span{font-size:24px}
+#live .lv-card.on{animation:lvcard 2.6s ease}
+@keyframes lvcard{0%{opacity:0}15%{opacity:1}75%{opacity:1}100%{opacity:0}}
+.livebtn{font-size:13px;color:#f1d38a;border:1px solid #f1d38a55;border-radius:8px;padding:3px 7px;margin-left:6px}
 @keyframes up{from{transform:translateY(40px);opacity:0}}
 @keyframes pop{from{transform:scale(.92);opacity:0}}
 @keyframes fade{from{opacity:0}}
@@ -147,6 +179,9 @@ input[type=range]{width:100%}
 </script>
 <script>
 /*CONTENT*/
+</script>
+<script>
+/*LIVE*/
 </script>
 <script>
 /*UI*/
