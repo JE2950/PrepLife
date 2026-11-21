@@ -994,7 +994,7 @@
   function rewind(s, idx) { const snap = s.snaps && s.snaps[idx]; if (!snap) return null; const keep = s.snaps.slice(0, idx); const st = snap.state; st.snaps = keep; return st; }
 
   const API = {
-    SCH_LABEL, initSch,
+    SCH_LABEL, initSch, applyFx: (s, fx, ctx) => applyFx(s, fx, ctx || {}), log: (s, t, k) => log(s, t, k),
     myTraits, hasTrait, traitSum, rivalTakesJob, buildReview,
     mood: s => s.flags.inspired ? { k: 'inspired', label: '✨ Inspired', tip: '+1 Time' } : s.stats.morale >= 72 ? { k: 'zone', label: '🔥 In the zone', tip: 'Less drain, better performance' } : s.stats.morale <= 30 ? { k: 'jaded', label: '🌧️ Jaded', tip: 'More drain, worse performance' } : null,
     VISIBLE, HIDDEN, STAT_LABEL, HT, ROLES, LADDER, ENDINGS,
