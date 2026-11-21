@@ -13,8 +13,12 @@
 :root{
   --navy:#18233d; --navy2:#22304f; --paper:#f7f2e7; --paper2:#efe7d6; --ink:#1d1d1f; --muted:#6b6658;
   --green:#2f5d46; --burgundy:#8a2433; --gold:#b8902f; --line:#e1d8c4; --good:#3f7d52; --mid:#c08a2b; --bad:#b0413e;
+  --card:var(--card); --track:#dcd2bd; --dash:#e8dfcc;
   --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
 }
+body.dark{--paper:#151b29;--paper2:#1d2537;--ink:#ebe6d8;--muted:#9f998a;--line:#2e3850;--card:#1f2839;--track:#33405a;--dash:#2a3349;--navy:#0e1422;--good:#6cbf84;--bad:#e0726d;--mid:#e0b25a}
+body.dark .sec h3{color:#e9d9a8} body.dark .card h3, body.dark .pop h2, body.dark .sheet-h h2{color:#e9d9a8} body.dark .line.sys{color:#8fd0a5} body.dark .line.action{color:#cfc9ba}
+body.dark .choice{background:#2f3d5c} body.dark .item .r b{color:#8fd0a5!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--navy);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,sans-serif}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
@@ -37,7 +41,7 @@ h1,h2,h3,.serif{font-family:Fraunces,Georgia,serif;font-weight:700;letter-spacin
 .stat{font-size:12px;color:var(--muted)}
 .stat .row{display:flex;justify-content:space-between}
 .stat b{color:var(--ink);font-weight:600}
-.bar{height:7px;border-radius:4px;background:#dcd2bd;overflow:hidden;margin-top:2px}
+.bar{height:7px;border-radius:4px;background:var(--track);overflow:hidden;margin-top:2px}
 .bar i{display:block;height:100%;border-radius:4px;transition:width .5s}
 .timebar{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin-top:2px}
 .pips{display:flex;gap:4px;align-items:center}
@@ -49,7 +53,7 @@ h1,h2,h3,.serif{font-family:Fraunces,Georgia,serif;font-weight:700;letter-spacin
 .journal{flex:1;overflow-y:auto;padding:4px 14px 18px;-webkit-overflow-scrolling:touch}
 .sec h3{position:sticky;top:0;background:var(--paper);margin:0;padding:12px 0 4px;font-size:15px;color:var(--navy);display:flex;justify-content:space-between;border-bottom:1px solid var(--line);z-index:1}
 .sec h3 small{font:500 12px Inter;color:var(--muted)}
-.line{padding:6px 0 6px 0;border-bottom:1px dashed #e8dfcc;font-size:14.5px}
+.line{padding:6px 0 6px 0;border-bottom:1px dashed var(--dash);font-size:14.5px}
 .line.sys{color:var(--green);font-weight:500}
 .line.action{color:#3d3a33}
 
@@ -70,7 +74,7 @@ h1,h2,h3,.serif{font-family:Fraunces,Georgia,serif;font-weight:700;letter-spacin
 .x{font-size:22px;padding:2px 8px;color:var(--muted)}
 .sheet-b{overflow-y:auto;padding:4px 14px 20px}
 .grp{font:600 11.5px Inter;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 2px 6px}
-.item{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:10px 11px;background:#fffdf8;border:1px solid var(--line);border-radius:12px;margin-bottom:7px}
+.item{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:10px 11px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:7px}
 .item:active{background:var(--paper2)}
 .item .e{font-size:22px;width:30px;text-align:center;flex:none}
 .item .t{flex:1;min-width:0}
@@ -79,9 +83,9 @@ h1,h2,h3,.serif{font-family:Fraunces,Georgia,serif;font-weight:700;letter-spacin
 .item .r{font-size:12px;color:var(--muted);flex:none;text-align:right}
 .item[disabled]{opacity:.45}
 .item.on{border-color:var(--green);background:#eef5ef}
-.mini{height:5px;border-radius:3px;background:#dcd2bd;margin-top:4px;overflow:hidden}
+.mini{height:5px;border-radius:3px;background:var(--track);margin-top:4px;overflow:hidden}
 .mini i{display:block;height:100%}
-.card{background:#fffdf8;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}
 .card h3{margin:0 0 4px;font-size:17px;color:var(--navy)}
 .kv{display:flex;justify-content:space-between;font-size:13.5px;padding:3px 0;border-bottom:1px dotted var(--line)}
 .kv:last-child{border:0}
@@ -108,14 +112,25 @@ h1,h2,h3,.serif{font-family:Fraunces,Georgia,serif;font-weight:700;letter-spacin
 .start h1{font-size:34px;margin:10px 0 2px;text-align:center}
 .start .tag{text-align:center;opacity:.75;margin:0 0 20px}
 .start label{display:block;font-size:12px;opacity:.8;margin:12px 0 4px}
-.start input,.start select{width:100%;padding:11px 12px;border-radius:10px;border:0;font:inherit;background:#fffdf8;color:var(--ink)}
+.start input,.start select{width:100%;padding:11px 12px;border-radius:10px;border:0;font:inherit;background:#fffdf8;color:#1d1d1f}
+.traits{display:flex;flex-wrap:wrap;gap:6px}
+.trait{padding:7px 10px;border-radius:16px;border:1.5px solid rgba(255,255,255,.35);font-size:13px;color:#fff}
+.trait.on{background:#f1d38a;color:#18233d;border-color:#f1d38a;font-weight:600}
+.traitinfo{font-size:12.5px;opacity:.85;margin-top:6px;min-height:18px}
+.toast{position:absolute;left:50%;top:calc(12px + var(--safe-t));transform:translateX(-50%);z-index:50;background:#18233d;color:#fff;border:1.5px solid #f1d38a;border-radius:14px;padding:9px 14px;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.35);animation:toast 3.6s ease forwards;max-width:90%;display:flex;gap:9px;align-items:center}
+.toast b{color:#f1d38a;display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,-14px)}8%{opacity:1;transform:translate(-50%,0)}85%{opacity:1}100%{opacity:0}}
+.rv{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0 12px}
+.rv div{background:var(--paper2);border-radius:10px;padding:7px 9px;font-size:12px;color:var(--muted);text-align:left}
+.rv div b{display:block;color:var(--ink);font-size:17px}
+.ach{opacity:.4}.ach.got{opacity:1}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .btn{display:block;width:100%;padding:14px;border-radius:12px;background:var(--burgundy);color:#fff;font-weight:700;font-size:16px;margin-top:18px;text-align:center}
 .btn.ghost{background:transparent;border:1.5px solid rgba(255,255,255,.4);margin-top:10px}
 .btn.green{background:var(--green)}
 .bigcrest{width:84px;height:92px;margin:0 auto;display:block;position:relative}
 .end{flex:1;overflow-y:auto;padding:calc(24px + var(--safe-t)) 18px 30px}
-.endcard{background:#fffdf8;border:1px solid var(--line);border-radius:16px;padding:20px 16px;text-align:center}
+.endcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 16px;text-align:center}
 .ribbon{display:inline-block;margin:10px 0 4px;padding:8px 16px;background:var(--gold);color:#fff;border-radius:6px;font:700 17px Fraunces,serif;position:relative}
 .hof{font-size:13px;border-bottom:1px solid rgba(255,255,255,.15);padding:7px 0;display:flex;justify-content:space-between;gap:8px}
 textarea{width:100%;height:120px;font:12px ui-monospace,monospace;border-radius:8px;border:1px solid var(--line);padding:8px}
@@ -181,6 +196,7 @@ input[type=range]{width:100%}
     Deputy:      { rank: 4, drain: 34, label: () => 'Deputy Head', pay: () => 72000 },
     Head:        { rank: 5, drain: 36, label: s => s.me.gender === 'f' ? 'Headmistress' : 'Headmaster', pay: s => 98000 + s.school.prestige * 9000 },
   };
+  const RIVAL_TITLES = [p => 'Teaches ' + p.subject, p => 'Teaches ' + p.subject, p => 'Head of ' + p.subject, () => 'Director of Studies', () => 'Deputy Head'];
   const LADDER = {
     HoD:         { from: ['Teacher'], years: 3, need: { teaching: 60 }, vac: 0.35 },
     Housemaster: { from: ['Teacher', 'HoD'], years: 5, need: { rep: 58 }, boarding: true, vac: 0.25 },
@@ -188,6 +204,11 @@ input[type=range]{width:100%}
     Deputy:      { from: ['Housemaster', 'DoS'], years: 10, need: { rep: 70 }, vac: 0.18 },
     Head:        { from: ['Deputy'], years: 13, need: { rep: 76 }, external: true, vac: 0.35 },
   };
+
+  /* ---------- Traits ---------- */
+  const myTraits = s => (s.traits || []).map(id => (D().traits || []).find(t => t.id === id)).filter(Boolean);
+  const traitSum = (s, k) => myTraits(s).reduce((a, t) => a + (t[k] || 0), 0);
+  const hasTrait = (s, id) => (s.traits || []).includes(id);
 
   /* ---------- Formatting helpers ---------- */
   const htLabel = s => `${HT[s.ht].term} ½${HT[s.ht].half} · ${s.ay}/${String((s.ay + 1) % 100).padStart(2, '0')}`;
@@ -210,7 +231,7 @@ input[type=range]{width:100%}
       case 'hod': return 'Head of ' + s.me.subject;
       case 'bursar': return 'Bursar';
       case 'matron': return 'Matron';
-      case 'colleague': return p.subject ? 'Teaches ' + p.subject : 'Colleague';
+      case 'colleague': return (p.rival ? '⚔️ Your rival · ' + (RIVAL_TITLES[p.rrank] ? RIVAL_TITLES[p.rrank](p) : 'Colleague') : '') || (p.subject ? 'Teaches ' + p.subject : 'Colleague');
       case 'pupil': { const t = D().pupilTypes.find(x => x.id === p.type); return 'Year ' + p.year + (p.boarder ? ' · boarder' : '') + (t ? ' · ' + t.label : ''); }
       case 'slt': return 'Assistant Head (Teaching and Learning)';
       case 'parent': { const c = s.people.find(x => x.id === p.childId); return c ? 'Parent of ' + c.first : 'Parent'; }
@@ -274,6 +295,12 @@ input[type=range]{width:100%}
       makePerson(s, 'bursar', { rel: 45 });
       makePerson(s, 'matron', { g: 'f', title: 'Mrs', rel: sr });
       for (let i = 0; i < 3; i++) makePerson(s, 'colleague', { rel: ri(s, sr - 8, sr + 8) });
+      if (chance(s, 0.75)) {
+        const r = makePerson(s, 'colleague', { rel: ri(s, 30, 42) });
+        r.rival = true; r.subject = s.me.subject === 'Games' ? 'Geography' : pick(s, D().subjects.filter(x => x !== s.me.subject && x !== 'Games'));
+        r.rrank = Math.min(ROLES[s.career.role].rank, 2); r.rrep = ri(s, 48, 62);
+        r.quirk = pick(s, ['is always first to reply-all', 'laminates everything', 'quotes the inspection framework from memory', 'volunteers for everything the Head mentions', 'brings homemade flapjack to every meeting']);
+      }
     }
     for (let i = 0; i < 4; i++) addPupil(s);
     if (s.career.role === 'Head') s.people = s.people.filter(p => p.role !== 'head');
@@ -320,8 +347,19 @@ input[type=range]{width:100%}
     s.career = { role: 'ECT', years: 0, yearsInRole: 0, yearsAtSchool: 0, perf: 50, resp: [], applied: {},
       inductionFails: 0, team: null, history: [{ school: s.school.name, from: s.ay }], peak: 'ECT' };
     s.people = [];
+    s.traits = (o.traits || []).filter(id => (D().traits || []).some(t => t.id === id)).slice(0, 2);
+    s.alumni = []; s.reviews = [];
     staffSchool(s);
+    for (const t of myTraits(s)) {
+      if (t.start) for (const k in t.start) {
+        if (k in s.stats) s.stats[k] = clamp(s.stats[k] + t.start[k]);
+        else if (k in s.hidden) s.hidden[k] = clamp(s.hidden[k] + t.start[k]);
+        else if (k === 'money') s.money += t.start[k];
+      }
+      if (t.headRel) s.people.filter(p => STAFF_ROLES.includes(p.role)).forEach(p => p.rel = clamp(p.rel + (p.role === 'head' ? t.headRel : t.headRel / 2)));
+    }
     rollVacancies(s);
+    yearStart(s);
     newSection(s);
     log(s, `You join ${s.school.name}, a ${s.school.boarding ? 'boarding' : 'day'} prep school ${s.school.town}, as an ECT in ${s.me.subject}.`, 'sys');
     // schedule first inspection
@@ -398,6 +436,7 @@ input[type=range]{width:100%}
     if (spec.g && p.g !== spec.g) return false;
     if (spec.type && !arr(spec.type).includes(p.type)) return false;
     if (spec.age && !cmp(p.age || 0, spec.age)) return false;
+    if (spec.rival != null && !!p.rival !== spec.rival) return false;
     return true;
   }
   function resolveCast(s, cast, ctx) {
@@ -551,7 +590,7 @@ input[type=range]{width:100%}
   function markFired(s, e) { s.fired[e.id] = (s.fired[e.id] || 0) + 1; s.cd[e.id] = s.tick; }
 
   function prep(s, e, ctx) {
-    if (e.setup) e.setup(s, ctx, API);
+    if (e.setup && e.setup(s, ctx, API) === false) return false;
     return resolveCast(s, e.cast, ctx);
   }
   function startEvent(s, id, ctx = {}) {
@@ -691,9 +730,21 @@ input[type=range]{width:100%}
     if (role === 'DoS' && !byRole(s, 'hod')) makePerson(s, 'hod');
     if (role === 'Housemaster' || (role === 'Head' && s.school.boarding)) s.home = { type: 'school', label: role === 'Head' ? "The Head's House" : 'Boarding house flat', cost: 0 };
     log(s, `You are now ${roleLabel(s)}.`, 'sys');
+    const rv = s.people.find(p => p.rival);
+    if (rv) { rv.rel = clamp(rv.rel - 5); log(s, `⚔️ ${dispName(rv)} congratulates you through gritted teeth.`, 'sys'); if (ROLES[role].rank > rv.rrank) s.flags.beatRival = true; }
+  }
+  function rivalTakesJob(s, ctx) {
+    const rv = s.people.find(p => p.rival);
+    if (!rv || ctx.newSchool || !chance(s, 0.5)) return;
+    const target = ctx.target ? ROLES[ctx.target].rank : 0;
+    if (target <= 4 && rv.rrank < Math.min(target, 4)) rv.rrank = Math.min(target, 4);
+    log(s, `⚔️ The job goes to your rival, ${dispName(rv)}.`, 'sys');
+    s.stats.morale = clamp(s.stats.morale - 4); rv.rel = clamp(rv.rel - 4);
+    s.counters.rivalBeatYou = (s.counters.rivalBeatYou || 0) + 1;
   }
   function moveSchool(s, school, role) {
     stashStaff(s);
+    if (hasTrait(s, 'local') && (s.counters.schools || 1) === 1) { s.stats.morale = clamp(s.stats.morale - 12); log(s, 'Leaving the school you went to as a child hurts more than you expected. (Morale −12)', 'sys'); }
     s.school = school || makeSchool(s, s.school.id);
     s.counters.schools = (s.counters.schools || 1) + 1;
     s.career.yearsAtSchool = 0; s.career.resp.forEach(r => delete s.flags[r]); s.career.resp = []; s.career.team = null;
@@ -760,7 +811,11 @@ input[type=range]{width:100%}
   /* ---------- Advance one half-term ---------- */
   function workload(s) {
     let d = ROLES[s.career.role].drain;
-    for (const id of s.career.resp) { const r = D().resp.find(x => x.id === id); if (r) d += r.drain || 0; }
+    for (const id of s.career.resp) {
+      const r = D().resp.find(x => x.id === id); if (r) d += r.drain || 0;
+      for (const t of myTraits(s)) if (t.respDrain && t.respDrain[id]) d += t.respDrain[id];
+    }
+    d += traitSum(s, 'drain');
     if (s.study) d += D().quals.find(q => q.id === s.study.id).drain || 0;
     d += s.people.filter(p => p.role === 'child' && p.age < 5).length * 3;
     if (s.flags.tutoring) d += 3;
@@ -797,8 +852,9 @@ input[type=range]{width:100%}
     const repTarget = 22 + s.career.perf * 0.45 + s.career.resp.length * 4 + ROLES[s.career.role].rank * 4 + (s.hidden.charisma - 50) * 0.1;
     s.stats.rep = clamp(s.stats.rep + (repTarget - s.stats.rep) * 0.06);
     const partner = byRole(s, 'partner');
-    const moraleBase = 52 + smod(s, 'moraleBase', 0) + (s.stats.energy - 50) * 0.25 + (partner ? (partner.rel - 50) * 0.15 : -3) + (s.hidden.patience - 50) * 0.08 + (s.money < 0 ? -8 : 0);
+    const moraleBase = 52 + smod(s, 'moraleBase', 0) + traitSum(s, 'morale') + (s.stats.energy - 50) * 0.25 + (partner ? (partner.rel - 50) * 0.15 : -3) + (s.hidden.patience - 50) * 0.08 + (s.money < 0 ? -8 : 0);
     s.stats.morale = clamp(s.stats.morale + (moraleBase - s.stats.morale) * 0.3);
+    if (s.yr) { s.yr.moraleSum += s.stats.morale; s.yr.n++; }
     s.moodHigh = s.stats.morale >= 72 ? (s.moodHigh || 0) + 1 : 0;
     s.moodLow = s.stats.morale <= 30 ? (s.moodLow || 0) + 1 : 0;
     const wasInspired = !!s.flags.inspired;
@@ -820,7 +876,7 @@ input[type=range]{width:100%}
     }
     // 2. the break
     const hol = s.holiday;
-    const frac = Math.min(0.98, h.rest + (hol ? hol.rest / 100 : 0) - (s.flags.resident && h.rest < 0.5 ? 0.08 : 0));
+    const frac = Math.max(0.1, Math.min(0.98, h.rest + (hol ? hol.rest / 100 : 0) - (s.flags.resident && h.rest < 0.5 ? 0.08 : 0) + traitSum(s, 'rest')));
     const rest = (100 - s.stats.energy) * frac;
     s.stats.energy = clamp(s.stats.energy + rest);
     s.stats.morale = clamp(s.stats.morale + (rest / 14 + (hol ? hol.morale : 0)) * Math.max(0.2, (100 - s.stats.morale) / 60));
@@ -865,12 +921,26 @@ input[type=range]{width:100%}
     // pupils move up
     for (const p of s.people.filter(x => x.role === 'pupil')) {
       p.year++;
-      if (p.year > 8) { log(s, `🎒 ${p.first} ${p.last} leaves for ${pick(s, D().names.senior[s.school.gender === 'girls' ? 'girls' : 'boys'])}.`, 'sys'); s.counters.leavers = (s.counters.leavers || 0) + 1; removePerson(s, p); }
+      if (p.year > 8) {
+        log(s, `🎒 ${p.first} ${p.last} leaves for ${pick(s, D().names.senior[s.school.gender === 'girls' ? 'girls' : 'boys'])}.`, 'sys'); s.counters.leavers = (s.counters.leavers || 0) + 1;
+        s.alumni = s.alumni || []; s.alumni.push({ first: p.first, last: p.last, g: p.g, rel: Math.round(p.rel), type: p.type, leftAy: s.ay, school: s.school.name, used: false });
+        if (s.alumni.length > 80) s.alumni.shift();
+        removePerson(s, p);
+      }
     }
     while (s.people.filter(x => x.role === 'pupil').length < 4) addPupil(s, chance(s, 0.6) ? 3 : ri(s, 4, 7));
+    // rival climbs too
+    const rv = s.people.find(p => p.rival);
+    if (rv) {
+      rv.rrep = clamp(rv.rrep + ri(s, -2, 6));
+      if (rv.rrank < 4 && chance(s, Math.max(0, rv.rrep - 45) / 220)) {
+        rv.rrank++; log(s, `⚔️ Your rival ${dispName(rv)} is now ${RIVAL_TITLES[rv.rrank](rv)}.`, 'sys');
+        if (rv.rrank > ROLES[s.career.role].rank && !s.flags.rival_above) { s.flags.rival_above = true; startEvent(s, 'rival_boss', { cast: { r: rv.id } }); }
+      }
+    }
     // staff turnover
-    for (const p of s.people.filter(x => x.role === 'colleague')) if (chance(s, 0.12)) {
-      log(s, `👋 ${dispName(p)} leaves ${s.school.name}.`, 'sys'); removePerson(s, p);
+    for (const p of s.people.filter(x => x.role === 'colleague')) if (!(p.rival && s.pending.some(q => q.id === 'rival_boss')) && chance(s, p.rival ? 0.05 : 0.12)) {
+      log(s, p.rival ? `👋 Your rival ${dispName(p)} leaves ${s.school.name}. The common room feels oddly quiet.` : `👋 ${dispName(p)} leaves ${s.school.name}.`, 'sys'); removePerson(s, p);
       const n = makePerson(s, 'colleague'); log(s, `🆕 ${dispName(n)} joins to teach ${n.subject}.`, 'sys');
     }
     const head = byRole(s, 'head');
@@ -881,6 +951,26 @@ input[type=range]{width:100%}
     const a = s.me.age, risk = a < 50 ? 0.0004 : 0.0004 * Math.exp((a - 50) * 0.12) * (s.stats.energy < 20 ? 2 : 1);
     if (chance(s, risk)) { endGame(s, 'died'); return; }
     if (a >= 68) { endGame(s, 'retire'); return; }
+    buildReview(s);
+    yearStart(s);
+  }
+  function yearStart(s) {
+    s.yr = { c: JSON.parse(JSON.stringify(s.counters)), worth: netWorth(s), rep: s.stats.rep, teaching: s.stats.teaching, role: s.career.role, school: s.school.name, moraleSum: 0, n: 0, ay: s.ay };
+  }
+  function buildReview(s) {
+    const y = s.yr; if (!y || !y.n) return;
+    const d = k => (s.counters[k] || 0) - (y.c[k] || 0);
+    const r = {
+      year: y.ay + '/' + String((y.ay + 1) % 100).padStart(2, '0'), age: s.me.age - 1, school: y.school, roleStart: y.role, roleEnd: s.career.role,
+      morale: Math.round(y.moraleSum / y.n), rep: Math.round(s.stats.rep - y.rep), teaching: Math.round(s.stats.teaching - y.teaching),
+      worth: Math.round(netWorth(s) - y.worth), wins: d('wins'), losses: d('losses'), scholarships: d('scholarships'), letters: d('letters'),
+      detentions: d('detentions'), leavers: d('leavers'), promotions: d('promotions'), inspired: d('inspired'), burnouts: d('burnouts'), cups: d('croquetCups'), pews: d('pews'),
+    };
+    const prev = (s.reviews || [])[s.reviews.length - 1];
+    r.verdict = r.burnouts ? 'A year that took more than it gave.' : r.promotions ? 'The year you moved up.' : r.inspired ? 'A year you will remember fondly.' : r.morale >= 70 ? 'A good year. You enjoyed it.' : r.morale <= 35 ? 'A hard year. You got through it.' : r.rep >= 5 ? 'A year of quiet progress.' : 'A steady year.';
+    if (prev) r.vsMorale = r.morale - prev.morale;
+    s.reviews = s.reviews || []; s.reviews.push(r); if (s.reviews.length > 60) s.reviews.shift();
+    s.reviewPending = true;
   }
 
   /* ---------- Endings ---------- */
@@ -955,6 +1045,7 @@ input[type=range]{width:100%}
   function rewind(s, idx) { const snap = s.snaps && s.snaps[idx]; if (!snap) return null; const keep = s.snaps.slice(0, idx); const st = snap.state; st.snaps = keep; return st; }
 
   const API = {
+    myTraits, hasTrait, traitSum, rivalTakesJob, buildReview,
     mood: s => s.flags.inspired ? { k: 'inspired', label: '✨ Inspired', tip: '+1 Time' } : s.stats.morale >= 72 ? { k: 'zone', label: '🔥 In the zone', tip: 'Less drain, better performance' } : s.stats.morale <= 30 ? { k: 'jaded', label: '🌧️ Jaded', tip: 'More drain, worse performance' } : null,
     VISIBLE, HIDDEN, STAT_LABEL, HT, ROLES, LADDER, ENDINGS,
     rnd, ri, pick, chance, clamp, money, fmt, check, getVal,
@@ -976,22 +1067,70 @@ input[type=range]{width:100%}
   const D = root.PSL_DATA = {};
   // harder interviews for senior posts
   // Hambrook quietly rewards the pew; non-churchgoers are slightly penalised there
-  const RANKPEN = (s, ctx, P) => -P.ROLES[ctx.target].rank * 11 + (s.school.id === 'hambrook' && !(ctx.newSchool) ? Math.min(30, (s.counters.pews || 0) * 1.5) - 8 : 0);
+  const RANKPEN = (s, ctx, P) => -P.ROLES[ctx.target].rank * 11 + P.traitSum(s, 'interview') + (s.school.id === 'hambrook' && !(ctx.newSchool) ? Math.min(30, (s.counters.pews || 0) * 1.5) - 8 : 0);
 
   /* ---------- The four schools ---------- */
   D.schools = [
     { id: 'mudgrove', name: 'Mudgrove', nick: 'Mudders', town: 'in the Berkshire woods', boarding: true, gender: 'boys', prestige: 4,
       blurb: 'Small, old-fashioned and close-knit. Handbells, Latin grace, a brilliant Head. Everyone is on the same team.',
-      grudge: 'Hambrook', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 0.7, drainX: 1.0 } },
+      crest: { fill: '#2f5d46', band: '#f1d38a', ink: '#f1d38a', letter: 'M' }, grudge: 'Hambrook', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 0.7, drainX: 1.0 } },
     { id: 'hambrook', name: 'Hambrook', nick: 'Hambrook', town: 'near Ascot', boarding: true, gender: 'co-ed', prestige: 5,
       blurb: 'Shiny, polished, famous parents. A Head who runs it like a CEO and an SLT barely keeping afloat.',
-      grudge: 'Mudgrove', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 1.2, drainX: 1.08 } },
+      crest: { fill: '#e6eaf0', band: '#18233d', ink: '#18233d', letter: 'H' }, grudge: 'Mudgrove', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 1.2, drainX: 1.08 } },
     { id: 'thornbury', name: 'Thornbury Court', nick: 'Thornbury', town: 'on the Wiltshire Downs', boarding: true, gender: 'co-ed', prestige: 3,
       blurb: 'Sport first, second and third. The Head of Games has more power than the Head.',
-      grudge: 'Pelham Grange', mods: { payX: 1.0, moraleBase: 0, headRel: 50, staffRel: 52, vacX: 1.0, drainX: 1.05 } },
+      crest: { fill: '#7a1f2b', band: '#ffffff', ink: '#ffffff', letter: 'T' }, grudge: 'Pelham Grange', mods: { payX: 1.0, moraleBase: 0, headRel: 50, staffRel: 52, vacX: 1.0, drainX: 1.05 } },
     { id: 'larkspur', name: 'Larkspur House', nick: 'Larkspur', town: 'in leafy Surrey', boarding: false, gender: 'co-ed', prestige: 2,
       blurb: 'Progressive day school. First names, forest school, restorative circles, no detentions.',
-      grudge: "St Hubert's", mods: { payX: 0.92, moraleBase: 3, headRel: 55, staffRel: 55, vacX: 0.9, drainX: 0.9 } },
+      crest: { fill: '#c3b2e0', band: '#4b2a6b', ink: '#4b2a6b', letter: 'L' }, grudge: "St Hubert's", mods: { payX: 0.92, moraleBase: 3, headRel: 55, staffRel: 55, vacX: 0.9, drainX: 0.9 } },
+  ];
+
+  /* ---------- Teacher traits (pick up to two) ---------- */
+  D.traits = [
+    { id: 'oxbridge', emoji: '🎓', label: 'Oxbridge scholar', perk: 'Teaching +12, Reputation +5', drawback: 'Patience −15, and everyone expects brilliance', start: { teaching: 12, rep: 5, patience: -15 }, morale: -2 },
+    { id: 'rugby', emoji: '🏉', label: 'Ex-pro rugby player', perk: 'Charisma +12; coaching drains 3 less', drawback: 'Teaching −8, Organisation −10', start: { charisma: 12, teaching: -8, organisation: -10 }, respDrain: { coach: -3 } },
+    { id: 'nightowl', emoji: '🦉', label: 'Night owl', perk: 'Boarding and Division duties drain 3 less', drawback: 'Half-terms restore less energy', respDrain: { resident: -3, divmaster: -3 }, rest: -0.05 },
+    { id: 'spreadsheet', emoji: '📊', label: 'Spreadsheet wizard', perk: 'Organisation +20', drawback: 'Charisma −12', start: { organisation: 20, charisma: -12 } },
+    { id: 'silver', emoji: '🗣️', label: 'Silver tongue', perk: 'Charisma +18; interviews go easier', drawback: 'Karma −12', start: { charisma: 18, karma: -12 }, interview: 6 },
+    { id: 'local', emoji: '🏠', label: 'Old pupil of the school', perk: 'The Head and staff like you from day one', drawback: 'Leaving your first school hurts', headRel: 20 },
+    { id: 'runner', emoji: '🏃', label: 'Marathon runner', perk: 'Everything drains 2 less energy', drawback: 'Ambition −10: you have other goals', drain: -2, start: { ambition: -10 } },
+    { id: 'money', emoji: '💰', label: 'Family money', perk: '+£40,000 to start', drawback: 'Reputation −6, Karma −5', start: { money: 40000, rep: -6, karma: -5 } },
+    { id: 'patient', emoji: '🕊️', label: 'Endlessly patient', perk: 'Patience +20, Karma +10', drawback: 'Ambition −15', start: { patience: 20, karma: 10, ambition: -15 } },
+  ];
+
+  /* ---------- Achievements (kept across careers) ---------- */
+  const rk = (s, P) => P.ROLES[s.career.peak].rank;
+  const c_ = (s, k) => s.counters[k] || 0;
+  D.achievements = [
+    { id: 'bell', emoji: '🔔', title: 'Bell rung', desc: 'Survive your first half-term', test: s => s.tick >= 1 },
+    { id: 'qualified', emoji: '✅', title: 'Qualified', desc: 'Pass your ECT induction', test: s => s.career.peak !== 'ECT' },
+    { id: 'middle', emoji: '📘', title: 'Middle management', desc: 'Become a Head of Department or Housemaster', test: (s, m, P) => rk(s, P) >= 2 },
+    { id: 'senior', emoji: '📋', title: 'Senior team', desc: 'Join SLT as Director of Studies or Deputy', test: (s, m, P) => rk(s, P) >= 3 },
+    { id: 'head', emoji: '👑', title: 'The Head', desc: 'Become a Head', test: s => s.career.peak === 'Head' },
+    { id: 'tour', emoji: '🗺️', title: 'Grand tour', desc: 'Teach at all four schools (across careers)', test: (s, m) => m.schools.length >= 4 },
+    { id: 'mallet', emoji: '🔨', title: 'Mallet master', desc: 'Win a croquet trophy', test: s => c_(s, 'croquetCups') >= 1 },
+    { id: 'lawn', emoji: '🏆', title: 'Lord of the Lawn', desc: 'Win three croquet trophies in one career', test: s => c_(s, 'croquetCups') >= 3 },
+    { id: 'enemy', emoji: '⚔️', title: 'Old enemy', desc: 'Win the grudge match', test: s => c_(s, 'grudgeWins') >= 1 },
+    { id: 'hamsacked', emoji: '📦', title: 'Not Hambrook material', desc: 'Get sacked from Hambrook', test: s => s.over && s.ending && s.ending.id === 'sacked' && s.school.id === 'hambrook' },
+    { id: 'pew', emoji: '⛪', title: 'Pillar of the parish', desc: 'Twenty Sundays in the Hambrook pew', test: s => c_(s, 'pews') >= 20 },
+    { id: 'mudders', emoji: '🌧️', title: 'Mudders through and through', desc: 'Twenty-five years at Mudgrove', test: s => s.school.id === 'mudgrove' && s.career.yearsAtSchool >= 25 },
+    { id: 'larkhead', emoji: '🥁', title: 'Radical kindness from the top', desc: 'Become Head of Larkspur House', test: s => s.school.id === 'larkspur' && s.career.role === 'Head' },
+    { id: 'thornhead', emoji: '🏉', title: 'Games first', desc: 'Become Head of Thornbury Court', test: s => s.school.id === 'thornbury' && s.career.role === 'Head' },
+    { id: 'inspired', emoji: '✨', title: 'Inspired', desc: 'Become inspired', test: s => c_(s, 'inspired') >= 1 },
+    { id: 'wind', emoji: '💨', title: 'Second wind', desc: 'Dodge burnout through sheer love of the job', test: s => c_(s, 'secondWinds') >= 1 },
+    { id: 'brink', emoji: '🕯️', title: 'Back from the brink', desc: 'Burn out and keep going', test: s => c_(s, 'burnouts') >= 1 && !s.over },
+    { id: 'factory', emoji: '📜', title: 'Scholarship factory', desc: 'Five scholarships in one career', test: s => c_(s, 'scholarships') >= 5 },
+    { id: 'drawer', emoji: '✉️', title: 'The good drawer', desc: 'Ten thank-you letters', test: s => c_(s, 'letters') >= 10 },
+    { id: 'headcount', emoji: '🚌', title: 'Head count', desc: 'Leave a pupil in a gift shop', test: s => c_(s, 'lostChildren') >= 1 },
+    { id: 'wedding', emoji: '💒', title: 'Wedding bells', desc: 'Get married', test: s => !!s.flags.married },
+    { id: 'goodboy', emoji: '🐕', title: 'Good boy', desc: 'Get a house dog', test: s => !!s.flags.dog },
+    { id: 'howlers', emoji: '🏛️', title: 'Lost in translation', desc: 'Collect fifteen howlers', test: s => (s.fired.howler_latin || 0) + (s.fired.howler_french || 0) + (s.fired.howler_general || 0) >= 15 },
+    { id: 'beatrival', emoji: '🥇', title: 'One up', desc: 'Get promoted above your rival', test: s => !!s.flags.beatRival },
+    { id: 'rivalboss', emoji: '😬', title: 'Awkward', desc: 'Your rival becomes your boss', test: s => !!s.flags.rival_above },
+    { id: 'cameback', emoji: '🎓', title: 'They came back', desc: 'A former pupil returns', test: s => c_(s, 'alumniBack') >= 1 },
+    { id: 'decorated', emoji: '🎖️', title: 'Decorated', desc: 'Earn five different honours (across careers)', test: (s, m) => m.honours.length >= 5 },
+    { id: 'harness', emoji: '🕊️', title: 'Died in harness', desc: 'Die in post', test: s => s.over && s.ending && s.ending.id === 'died' },
+    { id: 'lifer', emoji: '♾️', title: 'Lifer', desc: 'Finish five careers', test: (s, m) => m.careers >= 5 },
   ];
 
   /* ---------- Pupil types ---------- */
@@ -1255,13 +1394,13 @@ input[type=range]{width:100%}
       choices: [
         { label: '"Everything. It needs shaking up."', outcomes: [
           { w: 25, by: { charisma: 0.5, rep: 0.6, ambition: 0.4 }, wfn: RANKPEN, text: 'Bold. The panel loves it. You get the job.', fx: { promote: true, morale: 12, count: 'promotions' } },
-          { w: 60, text: 'The panel exchange looks. You do not get the job.', fx: { morale: -6, rel: { head: -3 }, count: 'interviewFails' } } ] },
+          { w: 60, text: 'The panel exchange looks. You do not get the job.', fx: { morale: -6, rel: { head: -3 }, count: 'interviewFails', run: (s, ctx, P) => P.rivalTakesJob(s, ctx) } } ] },
         { label: '"Listen first, then change slowly."', outcomes: [
           { w: 35, by: { rep: 0.7, teaching: 0.3 }, wfn: RANKPEN, text: 'A safe, sensible answer. You get the job.', fx: { promote: true, morale: 12, count: 'promotions' } },
-          { w: 55, text: 'They give it to someone with more experience.', fx: { morale: -5, count: 'interviewFails' } } ] },
+          { w: 55, text: 'They give it to someone with more experience.', fx: { morale: -5, count: 'interviewFails', run: (s, ctx, P) => P.rivalTakesJob(s, ctx) } } ] },
         { label: 'Talk about your pupils', outcomes: [
           { w: 30, by: { rep: 0.6, karma: 0.4 }, wfn: RANKPEN, text: 'Your warmth wins the room. You get the job.', fx: { promote: true, morale: 12, count: 'promotions' } },
-          { w: 55, text: 'Lovely, but they wanted a manager. Not this time.', fx: { morale: -5, count: 'interviewFails' } } ] },
+          { w: 55, text: 'Lovely, but they wanted a manager. Not this time.', fx: { morale: -5, count: 'interviewFails', run: (s, ctx, P) => P.rivalTakesJob(s, ctx) } } ] },
       ] },
     { id: 'burnout', manual: true, emoji: '🕯️', title: 'Running on empty', tags: ['system'],
       text: 'You cried in the car park on Thursday. Your GP says you are exhausted.',
@@ -2104,6 +2243,126 @@ input[type=range]{width:100%}
   );
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* Common room rivals and former pupils who come back */
+(function (root) {
+  'use strict';
+  const D = root.PSL_DATA;
+  const RIVAL = { r: { role: 'colleague', rival: true } };
+
+  // former pupils: pick one who left at least `min` years ago and hasn't returned yet
+  const alIndex = (s, min) => (s.alumni || []).findIndex(a => !a.used && s.ay - a.leftAy >= min);
+  const alSetup = min => (s, ctx, P) => {
+    const i = alIndex(s, min); if (i < 0) return false;
+    const a = s.alumni[i];
+    ctx.alum = Object.assign({}, a); ctx.good = a.rel >= 55;
+    ctx.vars = { al: a.first + ' ' + a.last, alf: a.first, alsch: a.school, alhe: a.g === 'f' ? 'she' : 'he', alHe: a.g === 'f' ? 'She' : 'He', alhis: a.g === 'f' ? 'her' : 'his', yrs: String(s.ay - a.leftAy) };
+  };
+  const alUsed = (s, ctx) => {
+    const a = ctx.alum && (s.alumni || []).find(x => x.first === ctx.alum.first && x.last === ctx.alum.last && x.leftAy === ctx.alum.leftAy);
+    if (a) a.used = true; s.counters.alumniBack = (s.counters.alumniBack || 0) + 1;
+  };
+  const alPerson = (s, ctx, P, role, rel, extra) => {
+    const a = ctx.alum; if (!a) return null;
+    return P.makePerson(s, role, Object.assign({ first: a.first, last: a.last, g: a.g, rel, title: a.g === 'f' ? (role === 'parent' ? 'Mrs' : 'Ms') : 'Mr' }, extra || {}));
+  };
+  const good = { test: (s, c) => c.good };
+  const bad = { test: (s, c) => !c.good };
+
+  D.events.push(
+    /* ---------- Rival ---------- */
+    { id: 'rival_intro', emoji: '⚔️', title: 'Your rival', tags: ['rival'], cast: RIVAL, weight: 40, cooldown: 60,
+      when: { test: s => !s.flags['rivalmet_' + s.school.id] },
+      text: 'You notice {r} the moment you arrive. {r.He} {r.quirk}, and wants every job you want.',
+      fx: { run: s => { s.flags['rivalmet_' + s.school.id] = true; } } },
+    { id: 'rival_idea', emoji: '💡', title: 'Your idea', tags: ['rival', 'commonroom'], cast: RIVAL, weight: 8,
+      text: 'In the staff meeting, {r} presents your idea for lunchtime revision clinics as {r.his} own. {head} loves it.',
+      choices: [
+        { label: 'Call it out, there and then', outcomes: [
+          { w: 1, by: { charisma: 0.6 }, text: '"Lovely to see my idea taking shape, {r.first}." The room enjoys it. {r} does not.', fx: { rep: 4, rel: { r: -10 }, morale: 4 } },
+          { w: 1, text: 'You sound petty. {head} asks you both to "work together on it".', fx: { rep: -2, rel: { r: -6 }, morale: -3 } } ] },
+        { label: 'Have a private word afterwards', text: '{r} says {r.he} "thought it was a joint idea". Nothing changes, but {r.he} knows you know.', fx: { rel: { r: -3 }, patience: 2 } },
+        { label: 'Let it go', text: 'The clinics are a success. {r} gets a mention in the newsletter.', fx: { morale: -4, karma: 2 } },
+      ] },
+    { id: 'rival_gossip', emoji: '🗯️', title: 'Overheard', tags: ['rival'], cast: RIVAL, weight: 6,
+      text: 'You hear {r} has been telling people your Year 7s are "basically feral".',
+      choices: [
+        { label: 'Prove them wrong', text: 'Your Year 7s produce the best display in the school. You make sure {head} walks past it.', fx: { rep: 4, energy: -4, rel: { r: -2 } } },
+        { label: 'Return fire in the pub', outcomes: [
+          { w: 1, text: 'Your story about {r}\'s laminated seating plans brings the house down.', fx: { morale: 5, rel: { r: -8 }, karma: -2 } },
+          { w: 1, text: 'Someone at the table is {r.his} best friend. Oops.', fx: { rep: -3, rel: { r: -8 }, karma: -2 } } ] },
+        { label: 'Rise above it', text: 'You say nothing. It stings for a week.', fx: { morale: -2, patience: 2, karma: 1 } },
+      ] },
+    { id: 'rival_flapjack', emoji: '🍪', title: 'Flapjack', tags: ['rival'], cast: RIVAL, weight: 5,
+      outcomes: [
+        { w: 1, text: '{r} brings homemade flapjack to the staff meeting. Again. {head} takes two.', fx: { morale: -1 } },
+        { w: 1, text: '{r} replies-all to the Head\'s email within forty seconds. With a bullet-pointed action plan.', fx: { morale: -1 } },
+        { w: 1, text: '{r} has started arriving at 6.45am. Nobody knows what {r.he} does until 8.', fx: {} },
+      ] },
+    { id: 'rival_team', emoji: '🏉', title: 'The U13As', tags: ['rival', 'sport'], cast: RIVAL, when: { flags: 'coach' }, weight: 6, cooldown: 18,
+      text: 'You and {r} both want to coach the U13As next season. The Head of Games asks you to "sort it out between you".',
+      choices: [
+        { label: 'Fight for it', outcomes: [
+          { w: 1, by: { charisma: 0.4, rep: 0.4 }, text: 'You get the U13As. {r} gets the U9Cs and a face like thunder.', fx: { team: 'U13A', rep: 3, rel: { r: -8 } } },
+          { w: 1, text: '{r} gets the U13As. You get the U9Cs. They are lovely, to be fair.', fx: { morale: -3, rel: { r: -3 } } } ] },
+        { label: 'Offer to share it', text: 'Joint coaches. You argue about the back row all season, and the team wins anyway.', fx: { rel: { r: 8 }, karma: 2, count: 'wins' } },
+      ] },
+    { id: 'rival_wobble', emoji: '🚗', title: 'In the car park', tags: ['rival', 'pastoral'], cast: RIVAL, weight: 4, cooldown: 24,
+      text: '{r}\'s observation went badly. You find {r.him} sitting in {r.his} car in the dark, not driving home.',
+      choices: [
+        { label: 'Knock on the window', text: 'You talk for an hour. You find out {r.he} is just as scared as you are.', fx: { rel: { r: 18 }, karma: 6, morale: 3 } },
+        { label: 'Tell someone kind', text: 'You quietly tell {matron}, who knows exactly what to do.', fx: { rel: { r: 5 }, karma: 3 } },
+        { label: 'Allow yourself a small smile', text: 'You drive home. The smile does not last the journey.', fx: { karma: -6, morale: -2 } },
+      ] },
+    { id: 'rival_truce', emoji: '🍺', title: 'A truce?', tags: ['rival'], cast: RIVAL, when: { stat: { yearsAtSchool: '>=5' } }, weight: 5, once: true,
+      text: '{r} buys you a pint at the end-of-term drinks. "We should stop all this. We are on the same side, really."',
+      choices: [
+        { label: 'Shake on it', text: 'The rivalry ends. {r} turns out to be very good company.', fx: { rel: { r: 30 }, morale: 6, karma: 3, run: (s, c) => { const r = s.people.find(p => p.id === c.cast.r); if (r) r.rival = false; s.flags.truce = true; } } },
+        { label: '"We\'ll see"', text: '{r} nods. The game goes on.', fx: { rel: { r: -2 } } },
+      ] },
+    { id: 'rival_boss', manual: true, emoji: '😬', title: 'Your new boss', tags: ['rival'], cast: RIVAL,
+      text: '{r} is now senior to you. {r.He} books a "quick catch-up" with you for Monday at 7.30am.',
+      choices: [
+        { label: 'Be gracious', text: 'You congratulate {r.him} and mean most of it. {r.He} seems relieved.', fx: { rel: { r: 10 }, karma: 3, morale: -2 } },
+        { label: 'Keep your head down', text: 'You attend the catch-up. It is about the photocopier budget.', fx: { morale: -5 } },
+        { label: 'Start looking elsewhere', text: 'You open the job adverts that evening.', fx: { morale: -2, start: 'job_hunt' } },
+      ] },
+
+    /* ---------- Former pupils return ---------- */
+    { id: 'alumni_famous', emoji: '📰', title: 'In the news', tags: ['alumni'], when: { test: s => alIndex(s, 8) >= 0 }, setup: alSetup(8), weight: 2, cooldown: 24,
+      outcomes: [
+        { w: 1, when: good, text: '{al}, whom you taught at {alsch}, is interviewed on Radio 4 and thanks "a teacher who made me love {subject}". That\'s you.', fx: { morale: 12, rep: 3, run: alUsed } },
+        { w: 1, when: good, text: '{al}, whom you taught at {alsch}, dedicates {alhis} first novel "to the teacher who read my stories out loud". You buy six copies.', fx: { morale: 12, run: alUsed } },
+        { w: 1, when: good, text: '{al}, whom you taught at {alsch}, captains England at Twickenham. In the post-match interview {alhe} name-checks "my old prep school coach".', fx: { morale: 12, rep: 4, run: alUsed } },
+        { w: 1, when: bad, text: '{al}, whom you taught at {alsch}, writes a newspaper column about prep school. You are the villain in paragraph four.', fx: { morale: -6, rep: -2, run: alUsed } },
+        { w: 1, when: bad, text: '{al}, whom you taught at {alsch}, does a stand-up routine on television. The bit about the strict teacher is clearly you. It kills.', fx: { morale: -3, run: alUsed } },
+      ] },
+    { id: 'alumni_colleague', emoji: '🧑‍🏫', title: 'A familiar face', tags: ['alumni'], when: { test: s => alIndex(s, 10) >= 0 }, setup: alSetup(10), weight: 3, cooldown: 18,
+      text: 'The new member of staff is {al}, whom you taught {yrs} years ago. {alHe} still calls you "{sir}" by accident.',
+      choices: [
+        { label: 'Take them under your wing', outcomes: [
+          { w: 1, when: good, text: '{alf} becomes your closest ally in the common room. Full circle.', fx: { morale: 8, karma: 2, run: (s, c, P) => { alPerson(s, c, P, 'colleague', 80); alUsed(s, c); } } },
+          { w: 1, when: bad, text: '{alf} is polite but distant. {alHe} has clearly not forgotten that detention.', fx: { morale: -2, run: (s, c, P) => { alPerson(s, c, P, 'colleague', 30); alUsed(s, c); } } } ] },
+        { label: 'Treat them like any colleague', text: 'You keep it professional. {alf} seems grateful.', fx: { run: (s, c, P) => { alPerson(s, c, P, 'colleague', 55); alUsed(s, c); } } },
+      ] },
+    { id: 'alumni_parent', emoji: '👨‍👧', title: 'Second generation', tags: ['alumni', 'parents'], when: { test: s => alIndex(s, 15) >= 0 }, setup: alSetup(15), weight: 3, cooldown: 18,
+      text: 'A new Year 3 parent at the gate is {al}, whom you taught {yrs} years ago. {alHe} has brought {alhis} own child.',
+      outcomes: [
+        { w: 1, when: good, text: 'A new Year 3 parent at the gate is {al}, whom you taught {yrs} years ago. {alHe} tells {alhis} child, "This is the one I told you about." Your eyes go oddly misty.', fx: { morale: 10, run: (s, c, P) => { const k = P.makePerson(s, 'pupil', { last: c.alum.last, year: 3 }); alPerson(s, c, P, 'parent', 85, { childId: k.id }); alUsed(s, c); } } },
+        { w: 1, when: bad, text: 'A new Year 3 parent at the gate is {al}, whom you taught {yrs} years ago. {alHe} asks, pointedly, whether you still give detentions for "breathing loudly".', fx: { morale: -4, run: (s, c, P) => { const k = P.makePerson(s, 'pupil', { last: c.alum.last, year: 3 }); alPerson(s, c, P, 'parent', 25, { childId: k.id }); alUsed(s, c); } } },
+      ] },
+    { id: 'alumni_inspector', emoji: '🔍', title: 'The lead inspector', tags: ['alumni', 'observation'], when: { test: s => alIndex(s, 12) >= 0 }, setup: alSetup(12), weight: 2, cooldown: 24,
+      text: 'The lead inspector walks in with a clipboard. It is {al}, whom you last saw aged thirteen.',
+      choices: [
+        { label: '"Lovely to see you again!"', outcomes: [
+          { w: 1, when: good, text: '{alf} beams and tells the Head you were "the best teacher I ever had". The inspection goes beautifully.', fx: { rep: 10, morale: 8, rel: { head: 6 }, run: alUsed } },
+          { w: 1, when: bad, text: '{alf} smiles thinly and asks to see your marking. All of it.', fx: { rep: -5, energy: -6, morale: -4, run: alUsed } } ] },
+        { label: 'Strictly professional', outcomes: [
+          { w: 1, when: good, text: 'You both play it straight. {alf} winks at you on the way out.', fx: { rep: 5, morale: 4, run: alUsed } },
+          { w: 1, when: bad, text: 'Professional and fair. You are surprised how relieved you are.', fx: { rep: 1, run: alUsed } } ] },
+      ] },
+  );
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* The four schools: flavour events, plus the Hambrook pew (drip-fed, never stated) */
 (function (root) {
   'use strict';
@@ -2654,6 +2913,60 @@ input[type=range]{width:100%}
     try { if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.haptic) window.webkit.messageHandlers.haptic.postMessage(kind || 'light'); else if (navigator.vibrate) navigator.vibrate(12); } catch (e) { }
   };
   const save = () => { if (S) store.set(SAVE, S); };
+  const SETTINGS = 'psl.settings.v1', ACH = 'psl.ach.v1', META = 'psl.meta.v1';
+  const settings = Object.assign({ sound: true, theme: 'light' }, store.get(SETTINGS) || {});
+  function applyTheme() {
+    const dark = settings.theme === 'dark' || (settings.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.body.classList.toggle('dark', !!dark);
+  }
+  applyTheme();
+  let audio = null;
+  function chime(kind) {
+    if (!settings.sound) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume();
+      const t = audio.currentTime, base = kind === 'ach' ? 1046 : 740;
+      const parts = kind === 'ach' ? [[1, .35], [1.5, .2], [2, .12]] : [[1, .45], [2.76, .22], [5.4, .1], [8.93, .05]];
+      parts.forEach(([m, g], i) => {
+        const o = audio.createOscillator(), v = audio.createGain();
+        o.type = 'sine'; o.frequency.value = base * m;
+        const st = t + (kind === 'ach' ? i * 0.09 : 0);
+        v.gain.setValueAtTime(0.0001, st); v.gain.exponentialRampToValueAtTime(g * 0.4, st + 0.008);
+        v.gain.exponentialRampToValueAtTime(0.0001, st + (kind === 'ach' ? 0.6 : 1.8 / Math.sqrt(m)));
+        o.connect(v); v.connect(audio.destination); o.start(st); o.stop(st + 2);
+      });
+    } catch (e) { }
+  }
+  const meta = Object.assign({ schools: [], honours: [], careers: 0 }, store.get(META) || {});
+  const got = store.get(ACH) || {};
+  let toasts = [], toasting = false;
+  function checkAch() {
+    if (!S) return;
+    if (S.school && !meta.schools.includes(S.school.id)) { meta.schools.push(S.school.id); store.set(META, meta); }
+    if (S.over && !S.metaCounted) {
+      meta.careers++; if (S.ending && !meta.honours.includes(S.ending.honour.id)) meta.honours.push(S.ending.honour.id);
+      S.metaCounted = true; store.set(META, meta); save();
+    }
+    for (const a of D.achievements) {
+      if (got[a.id]) continue;
+      let ok = false; try { ok = a.test(S, meta, P); } catch (e) { }
+      if (ok) { got[a.id] = new Date().toISOString().slice(0, 10); toasts.push(a); }
+    }
+    if (toasts.length) { store.set(ACH, got); if (!toasting) showToasts(); }
+  }
+  function showToasts() {
+    const a = toasts.shift(); if (!a) { toasting = false; return; }
+    toasting = true; chime('ach'); haptic('success');
+    const t = document.createElement('div'); t.className = 'toast';
+    t.innerHTML = `<span style="font-size:24px">${esc(a.emoji)}</span><span><b>Achievement</b>${esc(a.title)}</span>`;
+    document.body.appendChild(t); setTimeout(() => { t.remove(); showToasts(); }, 3600);
+  }
+  function crestFor(school) {
+    const t = school && D.schools.find(x => x.id === school.id);
+    const c = (t && t.crest) || { fill: '#f1d38a', band: '#8a2433', ink: '#18233d', letter: 'P' };
+    return { svg: `<svg viewBox="0 0 44 48"><path d="M3 4h38v18c0 13-9 21-19 24C12 43 3 35 3 22z" fill="${c.fill}" stroke="#fff" stroke-width="1.5"/><path d="M3 15h38" stroke="${c.band}" stroke-width="3"/></svg>`, ink: c.ink, letter: c.letter };
+  }
   const barColour = v => v >= 60 ? 'var(--good)' : v >= 30 ? 'var(--mid)' : 'var(--bad)';
   const crestSVG = (fill = '#f1d38a') => `<svg viewBox="0 0 44 48"><path d="M3 4h38v18c0 13-9 21-19 24C12 43 3 35 3 22z" fill="${fill}" stroke="#fff" stroke-width="1.5"/><path d="M3 15h38" stroke="#8a2433" stroke-width="3"/></svg>`;
 
@@ -2683,22 +2996,44 @@ input[type=range]{width:100%}
       <div><label>Gender</label><select id="g"><option value="">Random</option><option value="m">Male</option><option value="f">Female</option></select></div></div>
       <div class="two"><div><label>Subject</label><select id="s"><option value="">Random</option>${subj}</select></div>
       <div><label>Start age</label><select id="a"><option value="">Random</option>${[22, 23, 24, 25, 26, 27, 28, 30, 35].map(n => `<option>${n}</option>`).join('')}</select></div></div>
+      <label>Traits · pick up to two</label><div class="traits" id="traits">${D.traits.map(t => `<button class="trait" data-trait="${t.id}">${esc(t.emoji)} ${esc(t.label)}</button>`).join('')}</div>
+      <div class="traitinfo" id="traitinfo">Optional. Each has a perk and a drawback.</div>
       <label>School</label><select id="sc"><option value="random">Random</option>${D.schools.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
       <div id="blurb" style="font-size:12.5px;opacity:.75;margin-top:6px;min-height:34px"></div>
       <button class="btn" id="go">Start a career</button>
       <button class="btn ghost" id="rand">Random teacher</button>
+      <button class="btn ghost" id="achbtn">🏅 Achievements · ${Object.keys(got).length} of ${D.achievements.length}</button>
+      <div class="two" style="margin-top:10px"><button class="btn ghost" style="margin:0" id="sndbtn">${settings.sound ? '🔔 Sound on' : '🔕 Sound off'}</button><button class="btn ghost" style="margin:0" id="thmbtn">${{ light: '☀️ Light', dark: '🌙 Dark', auto: '🌓 Auto' }[settings.theme]}</button></div>
       <p style="font-size:12px;opacity:.55;text-align:center;margin-top:18px">v1.1 · ${D.events.length} events · 4 schools${NATIVE ? '' : '<br>On iPhone: open in Safari, tap Share, then Add to Home Screen.'}</p>
       ${hof.length ? `<h3 style="margin:26px 0 6px">Honours board</h3>${hof.slice(-15).reverse().map(h => `<div class="hof"><span>${esc(h.emoji)} <b>${esc(h.name)}</b><br><small style="opacity:.7">${esc(h.peak)} · ${h.years} yrs · ${esc(h.ending)}</small></span><span style="text-align:right;color:#f1d38a">${esc(h.honour)}</span></div>`).join('')}` : ''}
     </div>`;
     const v = id => document.getElementById(id).value.trim();
-    document.getElementById('go').onclick = () => begin({ first: v('f'), last: v('l'), title: v('t'), gender: v('g'), subject: v('s'), age: +v('a') || undefined, school: v('sc') });
+    const picked = [];
+    const info = document.getElementById('traitinfo');
+    document.querySelectorAll('[data-trait]').forEach(b => b.onclick = () => {
+      const id = b.dataset.trait, i = picked.indexOf(id);
+      if (i >= 0) picked.splice(i, 1); else { if (picked.length >= 2) { const old = picked.shift(); document.querySelector(`[data-trait="${old}"]`).classList.remove('on'); } picked.push(id); }
+      b.classList.toggle('on', picked.includes(id));
+      info.innerHTML = picked.length ? picked.map(p => { const t = D.traits.find(x => x.id === p); return `<b>${esc(t.label)}:</b> ＋ ${esc(t.perk)} · − ${esc(t.drawback)}`; }).join('<br>') : 'Optional. Each has a perk and a drawback.';
+    });
+    document.getElementById('go').onclick = () => begin({ first: v('f'), last: v('l'), title: v('t'), gender: v('g'), subject: v('s'), age: +v('a') || undefined, school: v('sc'), traits: picked.slice() });
+    document.getElementById('achbtn').onclick = renderAchPage;
+    document.getElementById('sndbtn').onclick = () => { settings.sound = !settings.sound; store.set(SETTINGS, settings); if (settings.sound) chime('bell'); renderStart(); };
+    document.getElementById('thmbtn').onclick = () => { settings.theme = { light: 'dark', dark: 'auto', auto: 'light' }[settings.theme]; store.set(SETTINGS, settings); applyTheme(); renderStart(); };
     const sc = document.getElementById('sc'), bl = document.getElementById('blurb');
     sc.onchange = () => { const t = D.schools.find(x => x.id === sc.value); bl.textContent = t ? `${t.blurb} ${t.boarding ? 'Boarding' : 'Day'}, ${t.gender}.` : 'A school picked at random.'; }; sc.onchange();
-    document.getElementById('rand').onclick = () => begin({});
+    document.getElementById('rand').onclick = () => begin({ traits: [D.traits[Math.floor(Math.random() * D.traits.length)].id] });
     const c = document.getElementById('cont'); if (c) c.onclick = () => { S = saved; render(); };
   }
+  function achListHTML() {
+    return D.achievements.map(a => `<div class="item ach ${got[a.id] ? 'got' : ''}"><span class="e">${got[a.id] ? esc(a.emoji) : '🔒'}</span><span class="t"><b>${esc(a.title)}</b><small>${esc(a.desc)}${got[a.id] ? ' · ' + esc(got[a.id]) : ''}</small></span></div>`).join('');
+  }
+  function renderAchPage() {
+    $app.innerHTML = `<div class="hdr"><div class="who"><b>Achievements</b><small>${Object.keys(got).length} of ${D.achievements.length} · ${meta.careers} careers finished</small></div><button class="x" style="color:#fff" id="back">✕</button></div><div class="journal" style="padding-top:10px">${achListHTML()}</div>`;
+    document.getElementById('back').onclick = renderStart;
+  }
   function begin(o) {
-    Object.keys(o).forEach(k => { if (!o[k]) delete o[k]; });
+    Object.keys(o).forEach(k => { if (!o[k] || (Array.isArray(o[k]) && !o[k].length)) delete o[k]; });
     if (o.title === 'Mr') o.gender = o.gender || 'm';
     if (['Mrs', 'Ms', 'Miss'].includes(o.title)) o.gender = o.gender || 'f';
     S = P.newGame(o); result = null; sheet = null; save(); render();
@@ -2715,7 +3050,7 @@ input[type=range]{width:100%}
     const jl = S.log.slice(-60).map(sec => `<div class="sec"><h3>${esc(sec.h)}<small>${esc(sec.sub)}</small></h3>${sec.lines.map(l => `<div class="line ${l.k}">${esc(l.t)}</div>`).join('')}</div>`).join('');
     $app.innerHTML = `
       <div class="hdr">
-        <button class="crest" id="sandbox" aria-label="Sandbox">${crestSVG()}<span>${esc(S.me.first[0] + S.me.last[0])}</span></button>
+        <button class="crest" id="sandbox" aria-label="Sandbox">${crestFor(S.school).svg}<span style="color:${crestFor(S.school).ink}">${esc(crestFor(S.school).letter)}</span></button>
         <div class="who"><b>${esc(P.myName(S))}</b><small>${esc(P.roleLabel(S))}${S.career.team && S.flags.coach ? ' · ' + esc(S.career.team) + ' coach' : ''}</small><small>${esc(S.school.name)}</small></div>
         <div class="purse">Age ${S.me.age}<b>${P.money(S.money)}</b></div>
       </div>
@@ -2733,14 +3068,39 @@ input[type=range]{width:100%}
     const j = document.getElementById('journal');
     if (scrollBottom) j.scrollTop = j.scrollHeight;
     $app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { sheet = { tab: b.dataset.tab }; render(); });
-    document.getElementById('next').onclick = () => { haptic('light'); if (P.advance(S)) { scrollBottom = true; save(); render(); } };
+    document.getElementById('next').onclick = () => { haptic('light'); chime('bell'); if (P.advance(S)) { scrollBottom = true; save(); render(); } };
     document.getElementById('sandbox').onclick = () => { sheet = { tab: 'sandbox' }; render(); };
     if (!S.helpSeen) return showHelp();
+    checkAch();
+    if (S.reviewPending) return showReview();
     if (sheet) renderSheet();
     if (result) renderResult();
     else if (S.pending.length) renderEvent();
   }
 
+  function showReview() {
+    const r = S.reviews[S.reviews.length - 1];
+    if (!r) { S.reviewPending = false; return render(); }
+    const sign = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
+    const cell = (label, val) => `<div>${esc(label)}<b>${val}</b></div>`;
+    const cells = [cell('Average morale', r.morale + '%' + (r.vsMorale != null ? ` <small style="font-size:11px;color:var(--muted)">(${sign(r.vsMorale)} on last year)</small>` : '')),
+      cell('Reputation', sign(r.rep)), cell('Teaching', sign(r.teaching)), cell('Net worth', (r.worth < 0 ? '−' : '+') + P.money(Math.abs(r.worth)))];
+    if (r.wins || r.losses) cells.push(cell('Matches', `${r.wins}W ${r.losses}L`));
+    if (r.scholarships) cells.push(cell('Scholarships', r.scholarships));
+    if (r.letters) cells.push(cell('Thank-you letters', r.letters));
+    if (r.leavers) cells.push(cell('Pupils waved off', r.leavers));
+    if (r.detentions) cells.push(cell('Detentions given', r.detentions));
+    if (r.cups) cells.push(cell('Croquet trophies', r.cups));
+    if (r.inspired) cells.push(cell('Times inspired', r.inspired));
+    if (r.burnouts) cells.push(cell('Burnouts', r.burnouts));
+    const roleLine = r.roleStart !== r.roleEnd ? `${P.roleLabel(S, r.roleStart)} → ${P.roleLabel(S)}` : P.roleLabel(S);
+    const m = document.createElement('div'); m.className = 'modal';
+    m.innerHTML = `<div class="pop" style="border-top-color:var(--gold);max-height:88vh;overflow-y:auto"><div class="big">📅</div><h2>The ${esc(r.year)} year</h2>
+      <p style="margin-bottom:4px"><b>${esc(r.verdict)}</b></p><p style="font-size:13px;color:var(--muted);margin:0">${esc(roleLine)} · ${esc(r.school)} · age ${r.age}</p>
+      <div class="rv">${cells.join('')}</div><button class="choice" id="rvok">On to Michaelmas</button></div>`;
+    $app.appendChild(m);
+    m.querySelector('#rvok').onclick = () => { S.reviewPending = false; save(); render(); };
+  }
   function after(res) {
     if (res && res.text != null && !res.started) { result = res; const net = (res.fx || []).reduce((a, f) => a + (f.money ? 0 : f.d), 0); haptic(net < 0 ? 'warning' : net > 0 ? 'success' : 'light'); }
     save();
@@ -2785,10 +3145,12 @@ input[type=range]{width:100%}
     else if (tab === 'career') { title = 'Career'; body = careerHTML(); }
     else if (tab === 'people') { title = 'People'; body = peopleHTML(); }
     else if (tab === 'sandbox') { title = 'Sandbox'; body = sandboxHTML(); }
+    else if (tab === 'ach') { title = 'Achievements'; body = achListHTML(); }
+    else if (tab === 'reviews') { title = 'Past school years'; body = (S.reviews || []).slice().reverse().map(r => `<div class="card"><h3>${esc(r.year)} · ${esc(r.school)}</h3><div style="font-size:13.5px"><b>${esc(r.verdict)}</b><br>Morale ${r.morale}% · Rep ${r.rep >= 0 ? '+' : ''}${r.rep} · Teaching ${r.teaching >= 0 ? '+' : ''}${r.teaching}${r.wins || r.losses ? ` · ${r.wins}W ${r.losses}L` : ''}${r.scholarships ? ` · ${r.scholarships} scholarships` : ''}</div></div>`).join('') || '<div class="card">Your first review arrives at the end of the summer holidays.</div>'; }
     sc.innerHTML = `<div class="sheet"><div class="sheet-h"><h2>${esc(title)}</h2><button class="x" id="close">✕</button></div><div class="sheet-b">${body}</div></div>`;
     $app.appendChild(sc);
     sc.onclick = e => { if (e.target === sc) { sheet = null; render(); } };
-    sc.querySelector('#close').onclick = () => { sheet = sheet.person ? { tab: 'people' } : null; render(); };
+    sc.querySelector('#close').onclick = () => { sheet = sheet.person ? { tab: 'people' } : ['ach', 'reviews'].includes(sheet.tab) ? { tab: 'life' } : null; render(); };
     wireSheet(sc);
   }
   function timeNote() { return `<div class="card" style="padding:8px 12px;font-size:13px">Time left this half-term: <b>${S.time}</b> of ${S.maxTime} · Energy ${Math.round(S.stats.energy)}% · Workload −${Math.round(P.workload(S))}</div>`; }
@@ -2810,6 +3172,7 @@ input[type=range]{width:100%}
       <div class="kv"><span>Years teaching</span><span>${c.years} (${c.yearsAtSchool} here, ${c.yearsInRole} in role)</span></div>
       <div class="kv"><span>Salary</span><span>${P.money(P.salary(S))} a year</span></div>
       <div class="kv"><span>Performance</span><span>${Math.round(c.perf)}%</span></div>
+      ${P.myTraits(S).map(t => `<div class="kv"><span>${esc(t.emoji)} ${esc(t.label)}</span><span style="text-align:right;font-size:12px">＋ ${esc(t.perk)}<br>− ${esc(t.drawback)}</span></div>`).join('')}
       ${c.role === 'ECT' ? `<div class="kv"><span>Induction</span><span>Teaching 38+ by end of year 2</span></div>` : ''}</div>`;
     const lad = P.ladder(S);
     h += `<div class="grp">Promotion</div>`;
@@ -2831,7 +3194,7 @@ input[type=range]{width:100%}
     for (const [g, roles] of groups) {
       const ps = S.people.filter(p => roles.includes(p.role)); if (!ps.length) continue;
       h += `<div class="grp">${g}</div>`;
-      for (const p of ps) h += item({ e: { head: '🎩', deputy: '📋', hod: '📘', bursar: '💼', matron: '🩹', slt: '📏', colleague: '🧑‍🏫', pupil: p.g === 'f' ? '👧' : '👦', parent: '🧥', partner: '❤️', child: '🧸' }[p.role], t: P.dispName(p) + (p.role === 'pupil' ? '' : ''), s: P.personRoleLabel(S, p), bar: Math.round(p.rel), r: '›', attrs: `data-person="${p.id}"` });
+      for (const p of ps) h += item({ e: { head: '🎩', deputy: '📋', hod: '📘', bursar: '💼', matron: '🩹', slt: '📏', colleague: p.rival ? '⚔️' : '🧑‍🏫', pupil: p.g === 'f' ? '👧' : '👦', parent: '🧥', partner: '❤️', child: '🧸' }[p.role], t: P.dispName(p) + (p.role === 'pupil' ? '' : ''), s: P.personRoleLabel(S, p), bar: Math.round(p.rel), r: '›', attrs: `data-person="${p.id}"` });
     }
     return h;
   }
@@ -2861,7 +3224,12 @@ input[type=range]{width:100%}
     h += `<div class="grp">Home</div>` + `<div class="card" style="font-size:13.5px">You live in: <b>${esc(S.home.label)}</b></div>`;
     for (const o of P.housing(S)) h += item({ e: o.id === 'sell' ? '🏷️' : o.id === 'house' ? '🏡' : o.id === 'school' ? '🏫' : '🏢', t: o.label, s: o.sub, attrs: `data-home="${o.id}"`, dis: !o.ok });
     h += actionsHTML('life');
-    h += `<div class="grp">Help</div><button class="item" id="helpbtn"><span class="e">❓</span><span class="t"><b>How to play</b></span></button>`;
+    h += `<div class="grp">Settings and extras</div>
+      <button class="item" id="achsheet"><span class="e">🏅</span><span class="t"><b>Achievements</b><small>${Object.keys(got).length} of ${D.achievements.length} unlocked</small></span><span class="r">›</span></button>
+      <button class="item" id="reviews"><span class="e">📅</span><span class="t"><b>Past school years</b><small>${(S.reviews || []).length} reviews</small></span><span class="r">›</span></button>
+      <button class="item" id="sndtog"><span class="e">${settings.sound ? '🔔' : '🔕'}</span><span class="t"><b>Sound</b><small>${settings.sound ? 'Handbell on Next, chimes for achievements' : 'Off'}</small></span></button>
+      <button class="item" id="thmtog"><span class="e">${{ light: '☀️', dark: '🌙', auto: '🌓' }[settings.theme]}</span><span class="t"><b>Theme</b><small>${{ light: 'Light', dark: 'Dark (for night duty)', auto: 'Match my phone' }[settings.theme]}</small></span></button>
+      <button class="item" id="helpbtn"><span class="e">❓</span><span class="t"><b>How to play</b></span></button>`;
     return h;
   }
   function sandboxHTML() {
@@ -2898,6 +3266,10 @@ input[type=range]{width:100%}
     const fire = sc.querySelector('#sbfire'); if (fire) fire.onclick = () => { const ok = P.forceEvent(S, sc.querySelector('#sbev').value); if (!ok) fire.textContent = 'Could not fire (no one to cast)'; else { sheet = null; after(null); } };
     sc.querySelectorAll('[data-rewind]').forEach(b => b.onclick = () => { const st = P.rewind(S, +b.dataset.rewind); if (st) { S = st; sheet = null; result = null; after(null); } });
     const cp = sc.querySelector('#sbcopy'); if (cp) cp.onclick = () => { const t = sc.querySelector('#sbjson'); t.select(); try { navigator.clipboard.writeText(t.value).then(() => cp.textContent = 'Copied', () => cp.textContent = 'Select and copy above'); } catch (e) { cp.textContent = 'Select and copy above'; } };
+    const as = sc.querySelector('#achsheet'); if (as) as.onclick = () => { sheet = { tab: 'ach' }; render(); };
+    const rvb = sc.querySelector('#reviews'); if (rvb) rvb.onclick = () => { sheet = { tab: 'reviews' }; render(); };
+    const st = sc.querySelector('#sndtog'); if (st) st.onclick = () => { settings.sound = !settings.sound; store.set(SETTINGS, settings); if (settings.sound) chime('bell'); render(); };
+    const tt = sc.querySelector('#thmtog'); if (tt) tt.onclick = () => { settings.theme = { light: 'dark', dark: 'auto', auto: 'light' }[settings.theme]; store.set(SETTINGS, settings); applyTheme(); render(); };
     const hb = sc.querySelector('#helpbtn'); if (hb) hb.onclick = () => { S.helpSeen = false; sheet = null; render(); };
     const mn = sc.querySelector('#sbmenu'); if (mn) mn.onclick = () => { save(); S = null; sheet = null; render(); };
   }
@@ -2905,6 +3277,7 @@ input[type=range]{width:100%}
   /* ---------------- Ending ---------------- */
   function renderEnd() {
     const e = S.ending;
+    setTimeout(checkAch, 400);
     if (!S.hofSaved) {
       const hof = store.get(HOF) || [];
       hof.push({ name: e.name, emoji: e.emoji, peak: e.peak, years: e.years, ending: e.title, honour: e.honour.title });

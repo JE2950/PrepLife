@@ -5,22 +5,70 @@
   const D = root.PSL_DATA = {};
   // harder interviews for senior posts
   // Hambrook quietly rewards the pew; non-churchgoers are slightly penalised there
-  const RANKPEN = (s, ctx, P) => -P.ROLES[ctx.target].rank * 11 + (s.school.id === 'hambrook' && !(ctx.newSchool) ? Math.min(30, (s.counters.pews || 0) * 1.5) - 8 : 0);
+  const RANKPEN = (s, ctx, P) => -P.ROLES[ctx.target].rank * 11 + P.traitSum(s, 'interview') + (s.school.id === 'hambrook' && !(ctx.newSchool) ? Math.min(30, (s.counters.pews || 0) * 1.5) - 8 : 0);
 
   /* ---------- The four schools ---------- */
   D.schools = [
     { id: 'mudgrove', name: 'Mudgrove', nick: 'Mudders', town: 'in the Berkshire woods', boarding: true, gender: 'boys', prestige: 4,
       blurb: 'Small, old-fashioned and close-knit. Handbells, Latin grace, a brilliant Head. Everyone is on the same team.',
-      grudge: 'Hambrook', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 0.7, drainX: 1.0 } },
+      crest: { fill: '#2f5d46', band: '#f1d38a', ink: '#f1d38a', letter: 'M' }, grudge: 'Hambrook', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 0.7, drainX: 1.0 } },
     { id: 'hambrook', name: 'Hambrook', nick: 'Hambrook', town: 'near Ascot', boarding: true, gender: 'co-ed', prestige: 5,
       blurb: 'Shiny, polished, famous parents. A Head who runs it like a CEO and an SLT barely keeping afloat.',
-      grudge: 'Mudgrove', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 1.2, drainX: 1.08 } },
+      crest: { fill: '#e6eaf0', band: '#18233d', ink: '#18233d', letter: 'H' }, grudge: 'Mudgrove', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 1.2, drainX: 1.08 } },
     { id: 'thornbury', name: 'Thornbury Court', nick: 'Thornbury', town: 'on the Wiltshire Downs', boarding: true, gender: 'co-ed', prestige: 3,
       blurb: 'Sport first, second and third. The Head of Games has more power than the Head.',
-      grudge: 'Pelham Grange', mods: { payX: 1.0, moraleBase: 0, headRel: 50, staffRel: 52, vacX: 1.0, drainX: 1.05 } },
+      crest: { fill: '#7a1f2b', band: '#ffffff', ink: '#ffffff', letter: 'T' }, grudge: 'Pelham Grange', mods: { payX: 1.0, moraleBase: 0, headRel: 50, staffRel: 52, vacX: 1.0, drainX: 1.05 } },
     { id: 'larkspur', name: 'Larkspur House', nick: 'Larkspur', town: 'in leafy Surrey', boarding: false, gender: 'co-ed', prestige: 2,
       blurb: 'Progressive day school. First names, forest school, restorative circles, no detentions.',
-      grudge: "St Hubert's", mods: { payX: 0.92, moraleBase: 3, headRel: 55, staffRel: 55, vacX: 0.9, drainX: 0.9 } },
+      crest: { fill: '#c3b2e0', band: '#4b2a6b', ink: '#4b2a6b', letter: 'L' }, grudge: "St Hubert's", mods: { payX: 0.92, moraleBase: 3, headRel: 55, staffRel: 55, vacX: 0.9, drainX: 0.9 } },
+  ];
+
+  /* ---------- Teacher traits (pick up to two) ---------- */
+  D.traits = [
+    { id: 'oxbridge', emoji: '🎓', label: 'Oxbridge scholar', perk: 'Teaching +12, Reputation +5', drawback: 'Patience −15, and everyone expects brilliance', start: { teaching: 12, rep: 5, patience: -15 }, morale: -2 },
+    { id: 'rugby', emoji: '🏉', label: 'Ex-pro rugby player', perk: 'Charisma +12; coaching drains 3 less', drawback: 'Teaching −8, Organisation −10', start: { charisma: 12, teaching: -8, organisation: -10 }, respDrain: { coach: -3 } },
+    { id: 'nightowl', emoji: '🦉', label: 'Night owl', perk: 'Boarding and Division duties drain 3 less', drawback: 'Half-terms restore less energy', respDrain: { resident: -3, divmaster: -3 }, rest: -0.05 },
+    { id: 'spreadsheet', emoji: '📊', label: 'Spreadsheet wizard', perk: 'Organisation +20', drawback: 'Charisma −12', start: { organisation: 20, charisma: -12 } },
+    { id: 'silver', emoji: '🗣️', label: 'Silver tongue', perk: 'Charisma +18; interviews go easier', drawback: 'Karma −12', start: { charisma: 18, karma: -12 }, interview: 6 },
+    { id: 'local', emoji: '🏠', label: 'Old pupil of the school', perk: 'The Head and staff like you from day one', drawback: 'Leaving your first school hurts', headRel: 20 },
+    { id: 'runner', emoji: '🏃', label: 'Marathon runner', perk: 'Everything drains 2 less energy', drawback: 'Ambition −10: you have other goals', drain: -2, start: { ambition: -10 } },
+    { id: 'money', emoji: '💰', label: 'Family money', perk: '+£40,000 to start', drawback: 'Reputation −6, Karma −5', start: { money: 40000, rep: -6, karma: -5 } },
+    { id: 'patient', emoji: '🕊️', label: 'Endlessly patient', perk: 'Patience +20, Karma +10', drawback: 'Ambition −15', start: { patience: 20, karma: 10, ambition: -15 } },
+  ];
+
+  /* ---------- Achievements (kept across careers) ---------- */
+  const rk = (s, P) => P.ROLES[s.career.peak].rank;
+  const c_ = (s, k) => s.counters[k] || 0;
+  D.achievements = [
+    { id: 'bell', emoji: '🔔', title: 'Bell rung', desc: 'Survive your first half-term', test: s => s.tick >= 1 },
+    { id: 'qualified', emoji: '✅', title: 'Qualified', desc: 'Pass your ECT induction', test: s => s.career.peak !== 'ECT' },
+    { id: 'middle', emoji: '📘', title: 'Middle management', desc: 'Become a Head of Department or Housemaster', test: (s, m, P) => rk(s, P) >= 2 },
+    { id: 'senior', emoji: '📋', title: 'Senior team', desc: 'Join SLT as Director of Studies or Deputy', test: (s, m, P) => rk(s, P) >= 3 },
+    { id: 'head', emoji: '👑', title: 'The Head', desc: 'Become a Head', test: s => s.career.peak === 'Head' },
+    { id: 'tour', emoji: '🗺️', title: 'Grand tour', desc: 'Teach at all four schools (across careers)', test: (s, m) => m.schools.length >= 4 },
+    { id: 'mallet', emoji: '🔨', title: 'Mallet master', desc: 'Win a croquet trophy', test: s => c_(s, 'croquetCups') >= 1 },
+    { id: 'lawn', emoji: '🏆', title: 'Lord of the Lawn', desc: 'Win three croquet trophies in one career', test: s => c_(s, 'croquetCups') >= 3 },
+    { id: 'enemy', emoji: '⚔️', title: 'Old enemy', desc: 'Win the grudge match', test: s => c_(s, 'grudgeWins') >= 1 },
+    { id: 'hamsacked', emoji: '📦', title: 'Not Hambrook material', desc: 'Get sacked from Hambrook', test: s => s.over && s.ending && s.ending.id === 'sacked' && s.school.id === 'hambrook' },
+    { id: 'pew', emoji: '⛪', title: 'Pillar of the parish', desc: 'Twenty Sundays in the Hambrook pew', test: s => c_(s, 'pews') >= 20 },
+    { id: 'mudders', emoji: '🌧️', title: 'Mudders through and through', desc: 'Twenty-five years at Mudgrove', test: s => s.school.id === 'mudgrove' && s.career.yearsAtSchool >= 25 },
+    { id: 'larkhead', emoji: '🥁', title: 'Radical kindness from the top', desc: 'Become Head of Larkspur House', test: s => s.school.id === 'larkspur' && s.career.role === 'Head' },
+    { id: 'thornhead', emoji: '🏉', title: 'Games first', desc: 'Become Head of Thornbury Court', test: s => s.school.id === 'thornbury' && s.career.role === 'Head' },
+    { id: 'inspired', emoji: '✨', title: 'Inspired', desc: 'Become inspired', test: s => c_(s, 'inspired') >= 1 },
+    { id: 'wind', emoji: '💨', title: 'Second wind', desc: 'Dodge burnout through sheer love of the job', test: s => c_(s, 'secondWinds') >= 1 },
+    { id: 'brink', emoji: '🕯️', title: 'Back from the brink', desc: 'Burn out and keep going', test: s => c_(s, 'burnouts') >= 1 && !s.over },
+    { id: 'factory', emoji: '📜', title: 'Scholarship factory', desc: 'Five scholarships in one career', test: s => c_(s, 'scholarships') >= 5 },
+    { id: 'drawer', emoji: '✉️', title: 'The good drawer', desc: 'Ten thank-you letters', test: s => c_(s, 'letters') >= 10 },
+    { id: 'headcount', emoji: '🚌', title: 'Head count', desc: 'Leave a pupil in a gift shop', test: s => c_(s, 'lostChildren') >= 1 },
+    { id: 'wedding', emoji: '💒', title: 'Wedding bells', desc: 'Get married', test: s => !!s.flags.married },
+    { id: 'goodboy', emoji: '🐕', title: 'Good boy', desc: 'Get a house dog', test: s => !!s.flags.dog },
+    { id: 'howlers', emoji: '🏛️', title: 'Lost in translation', desc: 'Collect fifteen howlers', test: s => (s.fired.howler_latin || 0) + (s.fired.howler_french || 0) + (s.fired.howler_general || 0) >= 15 },
+    { id: 'beatrival', emoji: '🥇', title: 'One up', desc: 'Get promoted above your rival', test: s => !!s.flags.beatRival },
+    { id: 'rivalboss', emoji: '😬', title: 'Awkward', desc: 'Your rival becomes your boss', test: s => !!s.flags.rival_above },
+    { id: 'cameback', emoji: '🎓', title: 'They came back', desc: 'A former pupil returns', test: s => c_(s, 'alumniBack') >= 1 },
+    { id: 'decorated', emoji: '🎖️', title: 'Decorated', desc: 'Earn five different honours (across careers)', test: (s, m) => m.honours.length >= 5 },
+    { id: 'harness', emoji: '🕊️', title: 'Died in harness', desc: 'Die in post', test: s => s.over && s.ending && s.ending.id === 'died' },
+    { id: 'lifer', emoji: '♾️', title: 'Lifer', desc: 'Finish five careers', test: (s, m) => m.careers >= 5 },
   ];
 
   /* ---------- Pupil types ---------- */
@@ -284,13 +332,13 @@
       choices: [
         { label: '"Everything. It needs shaking up."', outcomes: [
           { w: 25, by: { charisma: 0.5, rep: 0.6, ambition: 0.4 }, wfn: RANKPEN, text: 'Bold. The panel loves it. You get the job.', fx: { promote: true, morale: 12, count: 'promotions' } },
-          { w: 60, text: 'The panel exchange looks. You do not get the job.', fx: { morale: -6, rel: { head: -3 }, count: 'interviewFails' } } ] },
+          { w: 60, text: 'The panel exchange looks. You do not get the job.', fx: { morale: -6, rel: { head: -3 }, count: 'interviewFails', run: (s, ctx, P) => P.rivalTakesJob(s, ctx) } } ] },
         { label: '"Listen first, then change slowly."', outcomes: [
           { w: 35, by: { rep: 0.7, teaching: 0.3 }, wfn: RANKPEN, text: 'A safe, sensible answer. You get the job.', fx: { promote: true, morale: 12, count: 'promotions' } },
-          { w: 55, text: 'They give it to someone with more experience.', fx: { morale: -5, count: 'interviewFails' } } ] },
+          { w: 55, text: 'They give it to someone with more experience.', fx: { morale: -5, count: 'interviewFails', run: (s, ctx, P) => P.rivalTakesJob(s, ctx) } } ] },
         { label: 'Talk about your pupils', outcomes: [
           { w: 30, by: { rep: 0.6, karma: 0.4 }, wfn: RANKPEN, text: 'Your warmth wins the room. You get the job.', fx: { promote: true, morale: 12, count: 'promotions' } },
-          { w: 55, text: 'Lovely, but they wanted a manager. Not this time.', fx: { morale: -5, count: 'interviewFails' } } ] },
+          { w: 55, text: 'Lovely, but they wanted a manager. Not this time.', fx: { morale: -5, count: 'interviewFails', run: (s, ctx, P) => P.rivalTakesJob(s, ctx) } } ] },
       ] },
     { id: 'burnout', manual: true, emoji: '🕯️', title: 'Running on empty', tags: ['system'],
       text: 'You cried in the car park on Thursday. Your GP says you are exhausted.',

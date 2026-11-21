@@ -51,6 +51,7 @@
     Deputy:      { rank: 4, drain: 34, label: () => 'Deputy Head', pay: () => 72000 },
     Head:        { rank: 5, drain: 36, label: s => s.me.gender === 'f' ? 'Headmistress' : 'Headmaster', pay: s => 98000 + s.school.prestige * 9000 },
   };
+  const RIVAL_TITLES = [p => 'Teaches ' + p.subject, p => 'Teaches ' + p.subject, p => 'Head of ' + p.subject, () => 'Director of Studies', () => 'Deputy Head'];
   const LADDER = {
     HoD:         { from: ['Teacher'], years: 3, need: { teaching: 60 }, vac: 0.35 },
     Housemaster: { from: ['Teacher', 'HoD'], years: 5, need: { rep: 58 }, boarding: true, vac: 0.25 },
@@ -58,6 +59,11 @@
     Deputy:      { from: ['Housemaster', 'DoS'], years: 10, need: { rep: 70 }, vac: 0.18 },
     Head:        { from: ['Deputy'], years: 13, need: { rep: 76 }, external: true, vac: 0.35 },
   };
+
+  /* ---------- Traits ---------- */
+  const myTraits = s => (s.traits || []).map(id => (D().traits || []).find(t => t.id === id)).filter(Boolean);
+  const traitSum = (s, k) => myTraits(s).reduce((a, t) => a + (t[k] || 0), 0);
+  const hasTrait = (s, id) => (s.traits || []).includes(id);
 
   /* ---------- Formatting helpers ---------- */
   const htLabel = s => `${HT[s.ht].term} ½${HT[s.ht].half} · ${s.ay}/${String((s.ay + 1) % 100).padStart(2, '0')}`;
@@ -80,7 +86,7 @@
       case 'hod': return 'Head of ' + s.me.subject;
       case 'bursar': return 'Bursar';
       case 'matron': return 'Matron';
-      case 'colleague': return p.subject ? 'Teaches ' + p.subject : 'Colleague';
+      case 'colleague': return (p.rival ? '⚔️ Your rival · ' + (RIVAL_TITLES[p.rrank] ? RIVAL_TITLES[p.rrank](p) : 'Colleague') : '') || (p.subject ? 'Teaches ' + p.subject : 'Colleague');
       case 'pupil': { const t = D().pupilTypes.find(x => x.id === p.type); return 'Year ' + p.year + (p.boarder ? ' · boarder' : '') + (t ? ' · ' + t.label : ''); }
       case 'slt': return 'Assistant Head (Teaching and Learning)';
       case 'parent': { const c = s.people.find(x => x.id === p.childId); return c ? 'Parent of ' + c.first : 'Parent'; }
@@ -144,6 +150,12 @@
       makePerson(s, 'bursar', { rel: 45 });
       makePerson(s, 'matron', { g: 'f', title: 'Mrs', rel: sr });
       for (let i = 0; i < 3; i++) makePerson(s, 'colleague', { rel: ri(s, sr - 8, sr + 8) });
+      if (chance(s, 0.75)) {
+        const r = makePerson(s, 'colleague', { rel: ri(s, 30, 42) });
+        r.rival = true; r.subject = s.me.subject === 'Games' ? 'Geography' : pick(s, D().subjects.filter(x => x !== s.me.subject && x !== 'Games'));
+        r.rrank = Math.min(ROLES[s.career.role].rank, 2); r.rrep = ri(s, 48, 62);
+        r.quirk = pick(s, ['is always first to reply-all', 'laminates everything', 'quotes the inspection framework from memory', 'volunteers for everything the Head mentions', 'brings homemade flapjack to every meeting']);
+      }
     }
     for (let i = 0; i < 4; i++) addPupil(s);
     if (s.career.role === 'Head') s.people = s.people.filter(p => p.role !== 'head');
@@ -190,8 +202,19 @@
     s.career = { role: 'ECT', years: 0, yearsInRole: 0, yearsAtSchool: 0, perf: 50, resp: [], applied: {},
       inductionFails: 0, team: null, history: [{ school: s.school.name, from: s.ay }], peak: 'ECT' };
     s.people = [];
+    s.traits = (o.traits || []).filter(id => (D().traits || []).some(t => t.id === id)).slice(0, 2);
+    s.alumni = []; s.reviews = [];
     staffSchool(s);
+    for (const t of myTraits(s)) {
+      if (t.start) for (const k in t.start) {
+        if (k in s.stats) s.stats[k] = clamp(s.stats[k] + t.start[k]);
+        else if (k in s.hidden) s.hidden[k] = clamp(s.hidden[k] + t.start[k]);
+        else if (k === 'money') s.money += t.start[k];
+      }
+      if (t.headRel) s.people.filter(p => STAFF_ROLES.includes(p.role)).forEach(p => p.rel = clamp(p.rel + (p.role === 'head' ? t.headRel : t.headRel / 2)));
+    }
     rollVacancies(s);
+    yearStart(s);
     newSection(s);
     log(s, `You join ${s.school.name}, a ${s.school.boarding ? 'boarding' : 'day'} prep school ${s.school.town}, as an ECT in ${s.me.subject}.`, 'sys');
     // schedule first inspection
@@ -268,6 +291,7 @@
     if (spec.g && p.g !== spec.g) return false;
     if (spec.type && !arr(spec.type).includes(p.type)) return false;
     if (spec.age && !cmp(p.age || 0, spec.age)) return false;
+    if (spec.rival != null && !!p.rival !== spec.rival) return false;
     return true;
   }
   function resolveCast(s, cast, ctx) {
@@ -421,7 +445,7 @@
   function markFired(s, e) { s.fired[e.id] = (s.fired[e.id] || 0) + 1; s.cd[e.id] = s.tick; }
 
   function prep(s, e, ctx) {
-    if (e.setup) e.setup(s, ctx, API);
+    if (e.setup && e.setup(s, ctx, API) === false) return false;
     return resolveCast(s, e.cast, ctx);
   }
   function startEvent(s, id, ctx = {}) {
@@ -561,9 +585,21 @@
     if (role === 'DoS' && !byRole(s, 'hod')) makePerson(s, 'hod');
     if (role === 'Housemaster' || (role === 'Head' && s.school.boarding)) s.home = { type: 'school', label: role === 'Head' ? "The Head's House" : 'Boarding house flat', cost: 0 };
     log(s, `You are now ${roleLabel(s)}.`, 'sys');
+    const rv = s.people.find(p => p.rival);
+    if (rv) { rv.rel = clamp(rv.rel - 5); log(s, `⚔️ ${dispName(rv)} congratulates you through gritted teeth.`, 'sys'); if (ROLES[role].rank > rv.rrank) s.flags.beatRival = true; }
+  }
+  function rivalTakesJob(s, ctx) {
+    const rv = s.people.find(p => p.rival);
+    if (!rv || ctx.newSchool || !chance(s, 0.5)) return;
+    const target = ctx.target ? ROLES[ctx.target].rank : 0;
+    if (target <= 4 && rv.rrank < Math.min(target, 4)) rv.rrank = Math.min(target, 4);
+    log(s, `⚔️ The job goes to your rival, ${dispName(rv)}.`, 'sys');
+    s.stats.morale = clamp(s.stats.morale - 4); rv.rel = clamp(rv.rel - 4);
+    s.counters.rivalBeatYou = (s.counters.rivalBeatYou || 0) + 1;
   }
   function moveSchool(s, school, role) {
     stashStaff(s);
+    if (hasTrait(s, 'local') && (s.counters.schools || 1) === 1) { s.stats.morale = clamp(s.stats.morale - 12); log(s, 'Leaving the school you went to as a child hurts more than you expected. (Morale −12)', 'sys'); }
     s.school = school || makeSchool(s, s.school.id);
     s.counters.schools = (s.counters.schools || 1) + 1;
     s.career.yearsAtSchool = 0; s.career.resp.forEach(r => delete s.flags[r]); s.career.resp = []; s.career.team = null;
@@ -630,7 +666,11 @@
   /* ---------- Advance one half-term ---------- */
   function workload(s) {
     let d = ROLES[s.career.role].drain;
-    for (const id of s.career.resp) { const r = D().resp.find(x => x.id === id); if (r) d += r.drain || 0; }
+    for (const id of s.career.resp) {
+      const r = D().resp.find(x => x.id === id); if (r) d += r.drain || 0;
+      for (const t of myTraits(s)) if (t.respDrain && t.respDrain[id]) d += t.respDrain[id];
+    }
+    d += traitSum(s, 'drain');
     if (s.study) d += D().quals.find(q => q.id === s.study.id).drain || 0;
     d += s.people.filter(p => p.role === 'child' && p.age < 5).length * 3;
     if (s.flags.tutoring) d += 3;
@@ -667,8 +707,9 @@
     const repTarget = 22 + s.career.perf * 0.45 + s.career.resp.length * 4 + ROLES[s.career.role].rank * 4 + (s.hidden.charisma - 50) * 0.1;
     s.stats.rep = clamp(s.stats.rep + (repTarget - s.stats.rep) * 0.06);
     const partner = byRole(s, 'partner');
-    const moraleBase = 52 + smod(s, 'moraleBase', 0) + (s.stats.energy - 50) * 0.25 + (partner ? (partner.rel - 50) * 0.15 : -3) + (s.hidden.patience - 50) * 0.08 + (s.money < 0 ? -8 : 0);
+    const moraleBase = 52 + smod(s, 'moraleBase', 0) + traitSum(s, 'morale') + (s.stats.energy - 50) * 0.25 + (partner ? (partner.rel - 50) * 0.15 : -3) + (s.hidden.patience - 50) * 0.08 + (s.money < 0 ? -8 : 0);
     s.stats.morale = clamp(s.stats.morale + (moraleBase - s.stats.morale) * 0.3);
+    if (s.yr) { s.yr.moraleSum += s.stats.morale; s.yr.n++; }
     s.moodHigh = s.stats.morale >= 72 ? (s.moodHigh || 0) + 1 : 0;
     s.moodLow = s.stats.morale <= 30 ? (s.moodLow || 0) + 1 : 0;
     const wasInspired = !!s.flags.inspired;
@@ -690,7 +731,7 @@
     }
     // 2. the break
     const hol = s.holiday;
-    const frac = Math.min(0.98, h.rest + (hol ? hol.rest / 100 : 0) - (s.flags.resident && h.rest < 0.5 ? 0.08 : 0));
+    const frac = Math.max(0.1, Math.min(0.98, h.rest + (hol ? hol.rest / 100 : 0) - (s.flags.resident && h.rest < 0.5 ? 0.08 : 0) + traitSum(s, 'rest')));
     const rest = (100 - s.stats.energy) * frac;
     s.stats.energy = clamp(s.stats.energy + rest);
     s.stats.morale = clamp(s.stats.morale + (rest / 14 + (hol ? hol.morale : 0)) * Math.max(0.2, (100 - s.stats.morale) / 60));
@@ -735,12 +776,26 @@
     // pupils move up
     for (const p of s.people.filter(x => x.role === 'pupil')) {
       p.year++;
-      if (p.year > 8) { log(s, `🎒 ${p.first} ${p.last} leaves for ${pick(s, D().names.senior[s.school.gender === 'girls' ? 'girls' : 'boys'])}.`, 'sys'); s.counters.leavers = (s.counters.leavers || 0) + 1; removePerson(s, p); }
+      if (p.year > 8) {
+        log(s, `🎒 ${p.first} ${p.last} leaves for ${pick(s, D().names.senior[s.school.gender === 'girls' ? 'girls' : 'boys'])}.`, 'sys'); s.counters.leavers = (s.counters.leavers || 0) + 1;
+        s.alumni = s.alumni || []; s.alumni.push({ first: p.first, last: p.last, g: p.g, rel: Math.round(p.rel), type: p.type, leftAy: s.ay, school: s.school.name, used: false });
+        if (s.alumni.length > 80) s.alumni.shift();
+        removePerson(s, p);
+      }
     }
     while (s.people.filter(x => x.role === 'pupil').length < 4) addPupil(s, chance(s, 0.6) ? 3 : ri(s, 4, 7));
+    // rival climbs too
+    const rv = s.people.find(p => p.rival);
+    if (rv) {
+      rv.rrep = clamp(rv.rrep + ri(s, -2, 6));
+      if (rv.rrank < 4 && chance(s, Math.max(0, rv.rrep - 45) / 220)) {
+        rv.rrank++; log(s, `⚔️ Your rival ${dispName(rv)} is now ${RIVAL_TITLES[rv.rrank](rv)}.`, 'sys');
+        if (rv.rrank > ROLES[s.career.role].rank && !s.flags.rival_above) { s.flags.rival_above = true; startEvent(s, 'rival_boss', { cast: { r: rv.id } }); }
+      }
+    }
     // staff turnover
-    for (const p of s.people.filter(x => x.role === 'colleague')) if (chance(s, 0.12)) {
-      log(s, `👋 ${dispName(p)} leaves ${s.school.name}.`, 'sys'); removePerson(s, p);
+    for (const p of s.people.filter(x => x.role === 'colleague')) if (!(p.rival && s.pending.some(q => q.id === 'rival_boss')) && chance(s, p.rival ? 0.05 : 0.12)) {
+      log(s, p.rival ? `👋 Your rival ${dispName(p)} leaves ${s.school.name}. The common room feels oddly quiet.` : `👋 ${dispName(p)} leaves ${s.school.name}.`, 'sys'); removePerson(s, p);
       const n = makePerson(s, 'colleague'); log(s, `🆕 ${dispName(n)} joins to teach ${n.subject}.`, 'sys');
     }
     const head = byRole(s, 'head');
@@ -751,6 +806,26 @@
     const a = s.me.age, risk = a < 50 ? 0.0004 : 0.0004 * Math.exp((a - 50) * 0.12) * (s.stats.energy < 20 ? 2 : 1);
     if (chance(s, risk)) { endGame(s, 'died'); return; }
     if (a >= 68) { endGame(s, 'retire'); return; }
+    buildReview(s);
+    yearStart(s);
+  }
+  function yearStart(s) {
+    s.yr = { c: JSON.parse(JSON.stringify(s.counters)), worth: netWorth(s), rep: s.stats.rep, teaching: s.stats.teaching, role: s.career.role, school: s.school.name, moraleSum: 0, n: 0, ay: s.ay };
+  }
+  function buildReview(s) {
+    const y = s.yr; if (!y || !y.n) return;
+    const d = k => (s.counters[k] || 0) - (y.c[k] || 0);
+    const r = {
+      year: y.ay + '/' + String((y.ay + 1) % 100).padStart(2, '0'), age: s.me.age - 1, school: y.school, roleStart: y.role, roleEnd: s.career.role,
+      morale: Math.round(y.moraleSum / y.n), rep: Math.round(s.stats.rep - y.rep), teaching: Math.round(s.stats.teaching - y.teaching),
+      worth: Math.round(netWorth(s) - y.worth), wins: d('wins'), losses: d('losses'), scholarships: d('scholarships'), letters: d('letters'),
+      detentions: d('detentions'), leavers: d('leavers'), promotions: d('promotions'), inspired: d('inspired'), burnouts: d('burnouts'), cups: d('croquetCups'), pews: d('pews'),
+    };
+    const prev = (s.reviews || [])[s.reviews.length - 1];
+    r.verdict = r.burnouts ? 'A year that took more than it gave.' : r.promotions ? 'The year you moved up.' : r.inspired ? 'A year you will remember fondly.' : r.morale >= 70 ? 'A good year. You enjoyed it.' : r.morale <= 35 ? 'A hard year. You got through it.' : r.rep >= 5 ? 'A year of quiet progress.' : 'A steady year.';
+    if (prev) r.vsMorale = r.morale - prev.morale;
+    s.reviews = s.reviews || []; s.reviews.push(r); if (s.reviews.length > 60) s.reviews.shift();
+    s.reviewPending = true;
   }
 
   /* ---------- Endings ---------- */
@@ -825,6 +900,7 @@
   function rewind(s, idx) { const snap = s.snaps && s.snaps[idx]; if (!snap) return null; const keep = s.snaps.slice(0, idx); const st = snap.state; st.snaps = keep; return st; }
 
   const API = {
+    myTraits, hasTrait, traitSum, rivalTakesJob, buildReview,
     mood: s => s.flags.inspired ? { k: 'inspired', label: '✨ Inspired', tip: '+1 Time' } : s.stats.morale >= 72 ? { k: 'zone', label: '🔥 In the zone', tip: 'Less drain, better performance' } : s.stats.morale <= 30 ? { k: 'jaded', label: '🌧️ Jaded', tip: 'More drain, worse performance' } : null,
     VISIBLE, HIDDEN, STAT_LABEL, HT, ROLES, LADDER, ENDINGS,
     rnd, ri, pick, chance, clamp, money, fmt, check, getVal,

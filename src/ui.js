@@ -31,6 +31,60 @@
     try { if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.haptic) window.webkit.messageHandlers.haptic.postMessage(kind || 'light'); else if (navigator.vibrate) navigator.vibrate(12); } catch (e) { }
   };
   const save = () => { if (S) store.set(SAVE, S); };
+  const SETTINGS = 'psl.settings.v1', ACH = 'psl.ach.v1', META = 'psl.meta.v1';
+  const settings = Object.assign({ sound: true, theme: 'light' }, store.get(SETTINGS) || {});
+  function applyTheme() {
+    const dark = settings.theme === 'dark' || (settings.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.body.classList.toggle('dark', !!dark);
+  }
+  applyTheme();
+  let audio = null;
+  function chime(kind) {
+    if (!settings.sound) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume();
+      const t = audio.currentTime, base = kind === 'ach' ? 1046 : 740;
+      const parts = kind === 'ach' ? [[1, .35], [1.5, .2], [2, .12]] : [[1, .45], [2.76, .22], [5.4, .1], [8.93, .05]];
+      parts.forEach(([m, g], i) => {
+        const o = audio.createOscillator(), v = audio.createGain();
+        o.type = 'sine'; o.frequency.value = base * m;
+        const st = t + (kind === 'ach' ? i * 0.09 : 0);
+        v.gain.setValueAtTime(0.0001, st); v.gain.exponentialRampToValueAtTime(g * 0.4, st + 0.008);
+        v.gain.exponentialRampToValueAtTime(0.0001, st + (kind === 'ach' ? 0.6 : 1.8 / Math.sqrt(m)));
+        o.connect(v); v.connect(audio.destination); o.start(st); o.stop(st + 2);
+      });
+    } catch (e) { }
+  }
+  const meta = Object.assign({ schools: [], honours: [], careers: 0 }, store.get(META) || {});
+  const got = store.get(ACH) || {};
+  let toasts = [], toasting = false;
+  function checkAch() {
+    if (!S) return;
+    if (S.school && !meta.schools.includes(S.school.id)) { meta.schools.push(S.school.id); store.set(META, meta); }
+    if (S.over && !S.metaCounted) {
+      meta.careers++; if (S.ending && !meta.honours.includes(S.ending.honour.id)) meta.honours.push(S.ending.honour.id);
+      S.metaCounted = true; store.set(META, meta); save();
+    }
+    for (const a of D.achievements) {
+      if (got[a.id]) continue;
+      let ok = false; try { ok = a.test(S, meta, P); } catch (e) { }
+      if (ok) { got[a.id] = new Date().toISOString().slice(0, 10); toasts.push(a); }
+    }
+    if (toasts.length) { store.set(ACH, got); if (!toasting) showToasts(); }
+  }
+  function showToasts() {
+    const a = toasts.shift(); if (!a) { toasting = false; return; }
+    toasting = true; chime('ach'); haptic('success');
+    const t = document.createElement('div'); t.className = 'toast';
+    t.innerHTML = `<span style="font-size:24px">${esc(a.emoji)}</span><span><b>Achievement</b>${esc(a.title)}</span>`;
+    document.body.appendChild(t); setTimeout(() => { t.remove(); showToasts(); }, 3600);
+  }
+  function crestFor(school) {
+    const t = school && D.schools.find(x => x.id === school.id);
+    const c = (t && t.crest) || { fill: '#f1d38a', band: '#8a2433', ink: '#18233d', letter: 'P' };
+    return { svg: `<svg viewBox="0 0 44 48"><path d="M3 4h38v18c0 13-9 21-19 24C12 43 3 35 3 22z" fill="${c.fill}" stroke="#fff" stroke-width="1.5"/><path d="M3 15h38" stroke="${c.band}" stroke-width="3"/></svg>`, ink: c.ink, letter: c.letter };
+  }
   const barColour = v => v >= 60 ? 'var(--good)' : v >= 30 ? 'var(--mid)' : 'var(--bad)';
   const crestSVG = (fill = '#f1d38a') => `<svg viewBox="0 0 44 48"><path d="M3 4h38v18c0 13-9 21-19 24C12 43 3 35 3 22z" fill="${fill}" stroke="#fff" stroke-width="1.5"/><path d="M3 15h38" stroke="#8a2433" stroke-width="3"/></svg>`;
 
@@ -60,22 +114,44 @@
       <div><label>Gender</label><select id="g"><option value="">Random</option><option value="m">Male</option><option value="f">Female</option></select></div></div>
       <div class="two"><div><label>Subject</label><select id="s"><option value="">Random</option>${subj}</select></div>
       <div><label>Start age</label><select id="a"><option value="">Random</option>${[22, 23, 24, 25, 26, 27, 28, 30, 35].map(n => `<option>${n}</option>`).join('')}</select></div></div>
+      <label>Traits · pick up to two</label><div class="traits" id="traits">${D.traits.map(t => `<button class="trait" data-trait="${t.id}">${esc(t.emoji)} ${esc(t.label)}</button>`).join('')}</div>
+      <div class="traitinfo" id="traitinfo">Optional. Each has a perk and a drawback.</div>
       <label>School</label><select id="sc"><option value="random">Random</option>${D.schools.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
       <div id="blurb" style="font-size:12.5px;opacity:.75;margin-top:6px;min-height:34px"></div>
       <button class="btn" id="go">Start a career</button>
       <button class="btn ghost" id="rand">Random teacher</button>
+      <button class="btn ghost" id="achbtn">🏅 Achievements · ${Object.keys(got).length} of ${D.achievements.length}</button>
+      <div class="two" style="margin-top:10px"><button class="btn ghost" style="margin:0" id="sndbtn">${settings.sound ? '🔔 Sound on' : '🔕 Sound off'}</button><button class="btn ghost" style="margin:0" id="thmbtn">${{ light: '☀️ Light', dark: '🌙 Dark', auto: '🌓 Auto' }[settings.theme]}</button></div>
       <p style="font-size:12px;opacity:.55;text-align:center;margin-top:18px">v1.1 · ${D.events.length} events · 4 schools${NATIVE ? '' : '<br>On iPhone: open in Safari, tap Share, then Add to Home Screen.'}</p>
       ${hof.length ? `<h3 style="margin:26px 0 6px">Honours board</h3>${hof.slice(-15).reverse().map(h => `<div class="hof"><span>${esc(h.emoji)} <b>${esc(h.name)}</b><br><small style="opacity:.7">${esc(h.peak)} · ${h.years} yrs · ${esc(h.ending)}</small></span><span style="text-align:right;color:#f1d38a">${esc(h.honour)}</span></div>`).join('')}` : ''}
     </div>`;
     const v = id => document.getElementById(id).value.trim();
-    document.getElementById('go').onclick = () => begin({ first: v('f'), last: v('l'), title: v('t'), gender: v('g'), subject: v('s'), age: +v('a') || undefined, school: v('sc') });
+    const picked = [];
+    const info = document.getElementById('traitinfo');
+    document.querySelectorAll('[data-trait]').forEach(b => b.onclick = () => {
+      const id = b.dataset.trait, i = picked.indexOf(id);
+      if (i >= 0) picked.splice(i, 1); else { if (picked.length >= 2) { const old = picked.shift(); document.querySelector(`[data-trait="${old}"]`).classList.remove('on'); } picked.push(id); }
+      b.classList.toggle('on', picked.includes(id));
+      info.innerHTML = picked.length ? picked.map(p => { const t = D.traits.find(x => x.id === p); return `<b>${esc(t.label)}:</b> ＋ ${esc(t.perk)} · − ${esc(t.drawback)}`; }).join('<br>') : 'Optional. Each has a perk and a drawback.';
+    });
+    document.getElementById('go').onclick = () => begin({ first: v('f'), last: v('l'), title: v('t'), gender: v('g'), subject: v('s'), age: +v('a') || undefined, school: v('sc'), traits: picked.slice() });
+    document.getElementById('achbtn').onclick = renderAchPage;
+    document.getElementById('sndbtn').onclick = () => { settings.sound = !settings.sound; store.set(SETTINGS, settings); if (settings.sound) chime('bell'); renderStart(); };
+    document.getElementById('thmbtn').onclick = () => { settings.theme = { light: 'dark', dark: 'auto', auto: 'light' }[settings.theme]; store.set(SETTINGS, settings); applyTheme(); renderStart(); };
     const sc = document.getElementById('sc'), bl = document.getElementById('blurb');
     sc.onchange = () => { const t = D.schools.find(x => x.id === sc.value); bl.textContent = t ? `${t.blurb} ${t.boarding ? 'Boarding' : 'Day'}, ${t.gender}.` : 'A school picked at random.'; }; sc.onchange();
-    document.getElementById('rand').onclick = () => begin({});
+    document.getElementById('rand').onclick = () => begin({ traits: [D.traits[Math.floor(Math.random() * D.traits.length)].id] });
     const c = document.getElementById('cont'); if (c) c.onclick = () => { S = saved; render(); };
   }
+  function achListHTML() {
+    return D.achievements.map(a => `<div class="item ach ${got[a.id] ? 'got' : ''}"><span class="e">${got[a.id] ? esc(a.emoji) : '🔒'}</span><span class="t"><b>${esc(a.title)}</b><small>${esc(a.desc)}${got[a.id] ? ' · ' + esc(got[a.id]) : ''}</small></span></div>`).join('');
+  }
+  function renderAchPage() {
+    $app.innerHTML = `<div class="hdr"><div class="who"><b>Achievements</b><small>${Object.keys(got).length} of ${D.achievements.length} · ${meta.careers} careers finished</small></div><button class="x" style="color:#fff" id="back">✕</button></div><div class="journal" style="padding-top:10px">${achListHTML()}</div>`;
+    document.getElementById('back').onclick = renderStart;
+  }
   function begin(o) {
-    Object.keys(o).forEach(k => { if (!o[k]) delete o[k]; });
+    Object.keys(o).forEach(k => { if (!o[k] || (Array.isArray(o[k]) && !o[k].length)) delete o[k]; });
     if (o.title === 'Mr') o.gender = o.gender || 'm';
     if (['Mrs', 'Ms', 'Miss'].includes(o.title)) o.gender = o.gender || 'f';
     S = P.newGame(o); result = null; sheet = null; save(); render();
@@ -92,7 +168,7 @@
     const jl = S.log.slice(-60).map(sec => `<div class="sec"><h3>${esc(sec.h)}<small>${esc(sec.sub)}</small></h3>${sec.lines.map(l => `<div class="line ${l.k}">${esc(l.t)}</div>`).join('')}</div>`).join('');
     $app.innerHTML = `
       <div class="hdr">
-        <button class="crest" id="sandbox" aria-label="Sandbox">${crestSVG()}<span>${esc(S.me.first[0] + S.me.last[0])}</span></button>
+        <button class="crest" id="sandbox" aria-label="Sandbox">${crestFor(S.school).svg}<span style="color:${crestFor(S.school).ink}">${esc(crestFor(S.school).letter)}</span></button>
         <div class="who"><b>${esc(P.myName(S))}</b><small>${esc(P.roleLabel(S))}${S.career.team && S.flags.coach ? ' · ' + esc(S.career.team) + ' coach' : ''}</small><small>${esc(S.school.name)}</small></div>
         <div class="purse">Age ${S.me.age}<b>${P.money(S.money)}</b></div>
       </div>
@@ -110,14 +186,39 @@
     const j = document.getElementById('journal');
     if (scrollBottom) j.scrollTop = j.scrollHeight;
     $app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { sheet = { tab: b.dataset.tab }; render(); });
-    document.getElementById('next').onclick = () => { haptic('light'); if (P.advance(S)) { scrollBottom = true; save(); render(); } };
+    document.getElementById('next').onclick = () => { haptic('light'); chime('bell'); if (P.advance(S)) { scrollBottom = true; save(); render(); } };
     document.getElementById('sandbox').onclick = () => { sheet = { tab: 'sandbox' }; render(); };
     if (!S.helpSeen) return showHelp();
+    checkAch();
+    if (S.reviewPending) return showReview();
     if (sheet) renderSheet();
     if (result) renderResult();
     else if (S.pending.length) renderEvent();
   }
 
+  function showReview() {
+    const r = S.reviews[S.reviews.length - 1];
+    if (!r) { S.reviewPending = false; return render(); }
+    const sign = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
+    const cell = (label, val) => `<div>${esc(label)}<b>${val}</b></div>`;
+    const cells = [cell('Average morale', r.morale + '%' + (r.vsMorale != null ? ` <small style="font-size:11px;color:var(--muted)">(${sign(r.vsMorale)} on last year)</small>` : '')),
+      cell('Reputation', sign(r.rep)), cell('Teaching', sign(r.teaching)), cell('Net worth', (r.worth < 0 ? '−' : '+') + P.money(Math.abs(r.worth)))];
+    if (r.wins || r.losses) cells.push(cell('Matches', `${r.wins}W ${r.losses}L`));
+    if (r.scholarships) cells.push(cell('Scholarships', r.scholarships));
+    if (r.letters) cells.push(cell('Thank-you letters', r.letters));
+    if (r.leavers) cells.push(cell('Pupils waved off', r.leavers));
+    if (r.detentions) cells.push(cell('Detentions given', r.detentions));
+    if (r.cups) cells.push(cell('Croquet trophies', r.cups));
+    if (r.inspired) cells.push(cell('Times inspired', r.inspired));
+    if (r.burnouts) cells.push(cell('Burnouts', r.burnouts));
+    const roleLine = r.roleStart !== r.roleEnd ? `${P.roleLabel(S, r.roleStart)} → ${P.roleLabel(S)}` : P.roleLabel(S);
+    const m = document.createElement('div'); m.className = 'modal';
+    m.innerHTML = `<div class="pop" style="border-top-color:var(--gold);max-height:88vh;overflow-y:auto"><div class="big">📅</div><h2>The ${esc(r.year)} year</h2>
+      <p style="margin-bottom:4px"><b>${esc(r.verdict)}</b></p><p style="font-size:13px;color:var(--muted);margin:0">${esc(roleLine)} · ${esc(r.school)} · age ${r.age}</p>
+      <div class="rv">${cells.join('')}</div><button class="choice" id="rvok">On to Michaelmas</button></div>`;
+    $app.appendChild(m);
+    m.querySelector('#rvok').onclick = () => { S.reviewPending = false; save(); render(); };
+  }
   function after(res) {
     if (res && res.text != null && !res.started) { result = res; const net = (res.fx || []).reduce((a, f) => a + (f.money ? 0 : f.d), 0); haptic(net < 0 ? 'warning' : net > 0 ? 'success' : 'light'); }
     save();
@@ -162,10 +263,12 @@
     else if (tab === 'career') { title = 'Career'; body = careerHTML(); }
     else if (tab === 'people') { title = 'People'; body = peopleHTML(); }
     else if (tab === 'sandbox') { title = 'Sandbox'; body = sandboxHTML(); }
+    else if (tab === 'ach') { title = 'Achievements'; body = achListHTML(); }
+    else if (tab === 'reviews') { title = 'Past school years'; body = (S.reviews || []).slice().reverse().map(r => `<div class="card"><h3>${esc(r.year)} · ${esc(r.school)}</h3><div style="font-size:13.5px"><b>${esc(r.verdict)}</b><br>Morale ${r.morale}% · Rep ${r.rep >= 0 ? '+' : ''}${r.rep} · Teaching ${r.teaching >= 0 ? '+' : ''}${r.teaching}${r.wins || r.losses ? ` · ${r.wins}W ${r.losses}L` : ''}${r.scholarships ? ` · ${r.scholarships} scholarships` : ''}</div></div>`).join('') || '<div class="card">Your first review arrives at the end of the summer holidays.</div>'; }
     sc.innerHTML = `<div class="sheet"><div class="sheet-h"><h2>${esc(title)}</h2><button class="x" id="close">✕</button></div><div class="sheet-b">${body}</div></div>`;
     $app.appendChild(sc);
     sc.onclick = e => { if (e.target === sc) { sheet = null; render(); } };
-    sc.querySelector('#close').onclick = () => { sheet = sheet.person ? { tab: 'people' } : null; render(); };
+    sc.querySelector('#close').onclick = () => { sheet = sheet.person ? { tab: 'people' } : ['ach', 'reviews'].includes(sheet.tab) ? { tab: 'life' } : null; render(); };
     wireSheet(sc);
   }
   function timeNote() { return `<div class="card" style="padding:8px 12px;font-size:13px">Time left this half-term: <b>${S.time}</b> of ${S.maxTime} · Energy ${Math.round(S.stats.energy)}% · Workload −${Math.round(P.workload(S))}</div>`; }
@@ -187,6 +290,7 @@
       <div class="kv"><span>Years teaching</span><span>${c.years} (${c.yearsAtSchool} here, ${c.yearsInRole} in role)</span></div>
       <div class="kv"><span>Salary</span><span>${P.money(P.salary(S))} a year</span></div>
       <div class="kv"><span>Performance</span><span>${Math.round(c.perf)}%</span></div>
+      ${P.myTraits(S).map(t => `<div class="kv"><span>${esc(t.emoji)} ${esc(t.label)}</span><span style="text-align:right;font-size:12px">＋ ${esc(t.perk)}<br>− ${esc(t.drawback)}</span></div>`).join('')}
       ${c.role === 'ECT' ? `<div class="kv"><span>Induction</span><span>Teaching 38+ by end of year 2</span></div>` : ''}</div>`;
     const lad = P.ladder(S);
     h += `<div class="grp">Promotion</div>`;
@@ -208,7 +312,7 @@
     for (const [g, roles] of groups) {
       const ps = S.people.filter(p => roles.includes(p.role)); if (!ps.length) continue;
       h += `<div class="grp">${g}</div>`;
-      for (const p of ps) h += item({ e: { head: '🎩', deputy: '📋', hod: '📘', bursar: '💼', matron: '🩹', slt: '📏', colleague: '🧑‍🏫', pupil: p.g === 'f' ? '👧' : '👦', parent: '🧥', partner: '❤️', child: '🧸' }[p.role], t: P.dispName(p) + (p.role === 'pupil' ? '' : ''), s: P.personRoleLabel(S, p), bar: Math.round(p.rel), r: '›', attrs: `data-person="${p.id}"` });
+      for (const p of ps) h += item({ e: { head: '🎩', deputy: '📋', hod: '📘', bursar: '💼', matron: '🩹', slt: '📏', colleague: p.rival ? '⚔️' : '🧑‍🏫', pupil: p.g === 'f' ? '👧' : '👦', parent: '🧥', partner: '❤️', child: '🧸' }[p.role], t: P.dispName(p) + (p.role === 'pupil' ? '' : ''), s: P.personRoleLabel(S, p), bar: Math.round(p.rel), r: '›', attrs: `data-person="${p.id}"` });
     }
     return h;
   }
@@ -238,7 +342,12 @@
     h += `<div class="grp">Home</div>` + `<div class="card" style="font-size:13.5px">You live in: <b>${esc(S.home.label)}</b></div>`;
     for (const o of P.housing(S)) h += item({ e: o.id === 'sell' ? '🏷️' : o.id === 'house' ? '🏡' : o.id === 'school' ? '🏫' : '🏢', t: o.label, s: o.sub, attrs: `data-home="${o.id}"`, dis: !o.ok });
     h += actionsHTML('life');
-    h += `<div class="grp">Help</div><button class="item" id="helpbtn"><span class="e">❓</span><span class="t"><b>How to play</b></span></button>`;
+    h += `<div class="grp">Settings and extras</div>
+      <button class="item" id="achsheet"><span class="e">🏅</span><span class="t"><b>Achievements</b><small>${Object.keys(got).length} of ${D.achievements.length} unlocked</small></span><span class="r">›</span></button>
+      <button class="item" id="reviews"><span class="e">📅</span><span class="t"><b>Past school years</b><small>${(S.reviews || []).length} reviews</small></span><span class="r">›</span></button>
+      <button class="item" id="sndtog"><span class="e">${settings.sound ? '🔔' : '🔕'}</span><span class="t"><b>Sound</b><small>${settings.sound ? 'Handbell on Next, chimes for achievements' : 'Off'}</small></span></button>
+      <button class="item" id="thmtog"><span class="e">${{ light: '☀️', dark: '🌙', auto: '🌓' }[settings.theme]}</span><span class="t"><b>Theme</b><small>${{ light: 'Light', dark: 'Dark (for night duty)', auto: 'Match my phone' }[settings.theme]}</small></span></button>
+      <button class="item" id="helpbtn"><span class="e">❓</span><span class="t"><b>How to play</b></span></button>`;
     return h;
   }
   function sandboxHTML() {
@@ -275,6 +384,10 @@
     const fire = sc.querySelector('#sbfire'); if (fire) fire.onclick = () => { const ok = P.forceEvent(S, sc.querySelector('#sbev').value); if (!ok) fire.textContent = 'Could not fire (no one to cast)'; else { sheet = null; after(null); } };
     sc.querySelectorAll('[data-rewind]').forEach(b => b.onclick = () => { const st = P.rewind(S, +b.dataset.rewind); if (st) { S = st; sheet = null; result = null; after(null); } });
     const cp = sc.querySelector('#sbcopy'); if (cp) cp.onclick = () => { const t = sc.querySelector('#sbjson'); t.select(); try { navigator.clipboard.writeText(t.value).then(() => cp.textContent = 'Copied', () => cp.textContent = 'Select and copy above'); } catch (e) { cp.textContent = 'Select and copy above'; } };
+    const as = sc.querySelector('#achsheet'); if (as) as.onclick = () => { sheet = { tab: 'ach' }; render(); };
+    const rvb = sc.querySelector('#reviews'); if (rvb) rvb.onclick = () => { sheet = { tab: 'reviews' }; render(); };
+    const st = sc.querySelector('#sndtog'); if (st) st.onclick = () => { settings.sound = !settings.sound; store.set(SETTINGS, settings); if (settings.sound) chime('bell'); render(); };
+    const tt = sc.querySelector('#thmtog'); if (tt) tt.onclick = () => { settings.theme = { light: 'dark', dark: 'auto', auto: 'light' }[settings.theme]; store.set(SETTINGS, settings); applyTheme(); render(); };
     const hb = sc.querySelector('#helpbtn'); if (hb) hb.onclick = () => { S.helpSeen = false; sheet = null; render(); };
     const mn = sc.querySelector('#sbmenu'); if (mn) mn.onclick = () => { save(); S = null; sheet = null; render(); };
   }
@@ -282,6 +395,7 @@
   /* ---------------- Ending ---------------- */
   function renderEnd() {
     const e = S.ending;
+    setTimeout(checkAch, 400);
     if (!S.hofSaved) {
       const hof = store.get(HOF) || [];
       hof.push({ name: e.name, emoji: e.emoji, peak: e.peak, years: e.years, ending: e.title, honour: e.honour.title });
