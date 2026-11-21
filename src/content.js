@@ -102,6 +102,11 @@
         { w: 80, text: 'A good evening at the pub with {col} and the Science department.', fx: { money: -30, morale: 5, energy: -1, rel: { col: 7 } } },
         { w: 20, text: 'One drink becomes five. Monday morning period one is a struggle.', fx: { money: -55, morale: 4, energy: -6, rel: { col: 8 } } },
       ] },
+    { id: 'inspired_lesson', tab: 'act', group: 'Classroom', emoji: '✨', label: 'Teach an inspired lesson', sub: 'Only while you are inspired', show: { flags: 'inspired' },
+      outcomes: [
+        { w: 80, text: 'Everything clicks. The class forget to watch the clock and so do you.', fx: { teaching: 4, rep: 2, morale: 2, perf: 5 } },
+        { w: 20, text: 'You get so carried away that you set three times too much homework. Worth it.', fx: { teaching: 3, rep: 1 } },
+      ] },
     // Wellbeing
     { id: 'run', tab: 'act', group: 'Wellbeing', emoji: '🏃', label: 'Run round the playing fields', sub: 'Energy and morale',
       outcomes: [
@@ -249,6 +254,7 @@
     { id: 'grudge', emoji: '⚔️', title: 'Grudge Bearer', text: 'You beat the old enemy, again and again.', test: s => (s.counters.grudgeWins || 0) >= 5 },
     { id: 'chips', emoji: '📚', title: 'Mr Chips', text: 'One school, a whole career.', test: s => s.career.yearsAtSchool >= 25 },
     { id: 'pastoral', emoji: '🫶', title: 'Safe Pair of Arms', text: 'Every homesick child knew where your door was.', test: s => s.hidden.karma >= 75 && s.flags.divmaster },
+    { id: 'joy', emoji: '✨', title: 'Lit Up the Room', text: 'You loved the job, and everyone could tell.', test: s => (s.counters.inspired || 0) >= 6 },
     { id: 'saint', emoji: '😇', title: 'Saint of the Common Room', text: 'Kind to everyone, always.', test: s => s.hidden.karma >= 85 },
     { id: 'touchline', emoji: '🏆', title: 'Legend of the Touchline', text: 'Your teams won and won.', test: s => (s.counters.wins || 0) >= 25 },
     { id: 'scholar', emoji: '🦉', title: 'Scholar', text: 'A truly great classroom teacher.', test: s => s.stats.teaching >= 90 },
@@ -302,6 +308,15 @@
           { w: 35, by: { charisma: 0.5 }, byRel: { head: 0.5 }, text: 'You are on a final warning. One more slip and you are out.', fx: { rep: 15, morale: -10, flag: 'final_warning' } },
           { w: 65, text: 'The decision is final.', fx: { ending: 'sacked' } } ] },
         { label: 'Resign with dignity', text: 'You resign before they can sack you.', fx: { ending: 'quit' } },
+      ] },
+    { id: 'jaded', manual: true, emoji: '🌧️', title: 'Running on fumes', cooldown: 12,
+      text: 'You have not enjoyed a single day this term. You catch yourself reading job adverts for estate agents.',
+      choices: [
+        { label: 'Talk to someone you trust', outcomes: [
+          { w: 1, text: 'A long, honest chat with a colleague. Nothing is fixed, but you feel less alone.', fx: { morale: 14, patience: 2 } } ] },
+        { label: 'Drop a responsibility', show: { test: s => s.career.resp.length > 0 }, text: 'You give one thing up. The relief is immediate.', fx: { run: s => { const r = s.career.resp.pop(); delete s.flags[r]; }, morale: 10, rep: -2 } },
+        { label: 'Start looking elsewhere', text: 'You start reading the job adverts properly.', fx: { morale: 4, start: 'job_hunt' } },
+        { label: 'Keep your head down', text: 'You keep going. Something has to give, eventually.', fx: { morale: -3 } },
       ] },
     { id: 'retire_confirm', manual: true, emoji: '🎓', title: 'Retire?', text: 'After {years} years of chalk and fixtures, is it time?',
       choices: [{ label: 'Yes, retire now', text: 'You announce your retirement at the end of term.', fx: { ending: 'retire' } }, { label: 'Not yet', text: '', fx: { time: 0 } }] },

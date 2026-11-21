@@ -476,7 +476,11 @@ input[type=range]{width:100%}
     const sum = [];
     if (!fx) return sum;
     for (const k of VISIBLE) if (fx[k]) {
-      const before = s.stats[k]; s.stats[k] = clamp(before + fx[k]);
+      const before = s.stats[k];
+      let delta = fx[k];
+      // good moods are earned: morale gains shrink as morale rises
+      if (k === 'morale' && delta > 0 && before > 40) delta *= Math.max(0.2, (100 - before) / 60);
+      s.stats[k] = clamp(before + delta);
       const d = Math.round(s.stats[k] - before); if (d) sum.push({ k: STAT_LABEL[k], d });
     }
     for (const k of HIDDEN) if (fx[k]) s.hidden[k] = clamp(s.hidden[k] + fx[k]);
@@ -762,7 +766,8 @@ input[type=range]{width:100%}
     if (s.flags.tutoring) d += 3;
     d -= (s.hidden.organisation - 50) * 0.08;
     if (s.me.age > 55) d += (s.me.age - 55) * 0.3;
-    return Math.max(8, d * smod(s, 'drainX', 1));
+    const mood = s.stats.morale >= 72 ? 0.9 : s.stats.morale <= 30 ? 1.1 : 1;
+    return Math.max(8, d * smod(s, 'drainX', 1) * mood);
   }
   function snapshot(s) {
     const copy = JSON.parse(JSON.stringify(Object.assign({}, s, { snaps: undefined })));
@@ -778,15 +783,28 @@ input[type=range]{width:100%}
     // 1. the half-term's work
     const drain = workload(s);
     s.stats.energy = clamp(s.stats.energy - drain);
-    const burnt = s.stats.energy <= 0;
+    let burnt = s.stats.energy <= 0;
+    if (burnt && s.stats.morale >= 70 && !s.flags['wind_' + s.ay]) {
+      burnt = false; s.flags['wind_' + s.ay] = true;
+      s.stats.energy = 8; s.stats.morale = clamp(s.stats.morale - 15);
+      log(s, '💨 Second wind. You were running on empty, but you love the job too much to stop. (Morale −15)', 'sys');
+      s.counters.secondWinds = (s.counters.secondWinds || 0) + 1;
+    }
     if (s.stats.teaching < 80) s.stats.teaching = clamp(s.stats.teaching + (80 - s.stats.teaching) * 0.01 + (s.hidden.ambition - 50) * 0.004);
     const target = s.stats.teaching * 0.45 + s.hidden.organisation * 0.2 + s.stats.energy * 0.2 + s.stats.morale * 0.15;
-    s.career.perf = clamp(s.career.perf * 0.7 + target * 0.3);
+    const moodPerf = s.stats.morale >= 72 ? 5 : s.stats.morale <= 30 ? -5 : 0;
+    s.career.perf = clamp(s.career.perf * 0.7 + (target + moodPerf) * 0.3);
     const repTarget = 22 + s.career.perf * 0.45 + s.career.resp.length * 4 + ROLES[s.career.role].rank * 4 + (s.hidden.charisma - 50) * 0.1;
     s.stats.rep = clamp(s.stats.rep + (repTarget - s.stats.rep) * 0.06);
     const partner = byRole(s, 'partner');
     const moraleBase = 52 + smod(s, 'moraleBase', 0) + (s.stats.energy - 50) * 0.25 + (partner ? (partner.rel - 50) * 0.15 : -3) + (s.hidden.patience - 50) * 0.08 + (s.money < 0 ? -8 : 0);
-    s.stats.morale = clamp(s.stats.morale + (moraleBase - s.stats.morale) * 0.18);
+    s.stats.morale = clamp(s.stats.morale + (moraleBase - s.stats.morale) * 0.3);
+    s.moodHigh = s.stats.morale >= 72 ? (s.moodHigh || 0) + 1 : 0;
+    s.moodLow = s.stats.morale <= 30 ? (s.moodLow || 0) + 1 : 0;
+    const wasInspired = !!s.flags.inspired;
+    if (s.moodHigh >= 2) s.flags.inspired = true; else delete s.flags.inspired;
+    if (s.flags.inspired && !wasInspired) { log(s, '✨ You are inspired. Two half-terms of loving the job: +1 Time each half-term while it lasts.', 'sys'); s.counters.inspired = (s.counters.inspired || 0) + 1; }
+    if (!s.flags.inspired && wasInspired) log(s, 'The inspiration fades. Back to four ⏱ a half-term.', 'sys');
     for (const p of s.people) { // relationships drift
       if (p.role === 'partner') p.rel = clamp(p.rel - (s.tick - p.seen > 1 ? 4 : 1));
       else if (p.role === 'head' && smod(s, 'headDrift', null) != null) p.rel = clamp(p.rel + (smod(s, 'headDrift', 50) - p.rel) * 0.12);
@@ -805,7 +823,7 @@ input[type=range]{width:100%}
     const frac = Math.min(0.98, h.rest + (hol ? hol.rest / 100 : 0) - (s.flags.resident && h.rest < 0.5 ? 0.08 : 0));
     const rest = (100 - s.stats.energy) * frac;
     s.stats.energy = clamp(s.stats.energy + rest);
-    s.stats.morale = clamp(s.stats.morale + rest / 8 + (hol ? hol.morale : 0));
+    s.stats.morale = clamp(s.stats.morale + (rest / 14 + (hol ? hol.morale : 0)) * Math.max(0.2, (100 - s.stats.morale) / 60));
     if (hol) log(s, `🧳 ${h.brk[0].toUpperCase() + h.brk.slice(1)}: ${hol.text}`, 'sys');
     else if (h.rest >= 0.6) log(s, `🏖️ The ${h.brk} arrive. You sleep until ten for a week.`, 'sys');
     s.holiday = null;
@@ -823,8 +841,9 @@ input[type=range]{width:100%}
     if (s.stats.rep <= 3 && !s.pending.some(p => p.id === 'sacked')) startEvent(s, 'sacked');
     const due = s.queue.filter(q => q.at <= s.tick); s.queue = s.queue.filter(q => q.at > s.tick);
     due.forEach(q => startEvent(s, q.id, q.ctx || {}));
+    if (s.moodLow >= 3 && !s.pending.some(p => p.id === 'jaded')) { startEvent(s, 'jaded'); s.moodLow = 0; }
     rollEvents(s);
-    s.time = s.maxTime;
+    s.time = s.maxTime + (s.flags.inspired ? 1 : 0);
     s.counters.ticks = (s.counters.ticks || 0) + 1;
     return true;
   }
@@ -936,6 +955,7 @@ input[type=range]{width:100%}
   function rewind(s, idx) { const snap = s.snaps && s.snaps[idx]; if (!snap) return null; const keep = s.snaps.slice(0, idx); const st = snap.state; st.snaps = keep; return st; }
 
   const API = {
+    mood: s => s.flags.inspired ? { k: 'inspired', label: '✨ Inspired', tip: '+1 Time' } : s.stats.morale >= 72 ? { k: 'zone', label: '🔥 In the zone', tip: 'Less drain, better performance' } : s.stats.morale <= 30 ? { k: 'jaded', label: '🌧️ Jaded', tip: 'More drain, worse performance' } : null,
     VISIBLE, HIDDEN, STAT_LABEL, HT, ROLES, LADDER, ENDINGS,
     rnd, ri, pick, chance, clamp, money, fmt, check, getVal,
     newGame, advance, choose, currentEvent, actions, doAction, personActions,
@@ -1052,6 +1072,11 @@ input[type=range]{width:100%}
       outcomes: [
         { w: 80, text: 'A good evening at the pub with {col} and the Science department.', fx: { money: -30, morale: 5, energy: -1, rel: { col: 7 } } },
         { w: 20, text: 'One drink becomes five. Monday morning period one is a struggle.', fx: { money: -55, morale: 4, energy: -6, rel: { col: 8 } } },
+      ] },
+    { id: 'inspired_lesson', tab: 'act', group: 'Classroom', emoji: '✨', label: 'Teach an inspired lesson', sub: 'Only while you are inspired', show: { flags: 'inspired' },
+      outcomes: [
+        { w: 80, text: 'Everything clicks. The class forget to watch the clock and so do you.', fx: { teaching: 4, rep: 2, morale: 2, perf: 5 } },
+        { w: 20, text: 'You get so carried away that you set three times too much homework. Worth it.', fx: { teaching: 3, rep: 1 } },
       ] },
     // Wellbeing
     { id: 'run', tab: 'act', group: 'Wellbeing', emoji: '🏃', label: 'Run round the playing fields', sub: 'Energy and morale',
@@ -1200,6 +1225,7 @@ input[type=range]{width:100%}
     { id: 'grudge', emoji: '⚔️', title: 'Grudge Bearer', text: 'You beat the old enemy, again and again.', test: s => (s.counters.grudgeWins || 0) >= 5 },
     { id: 'chips', emoji: '📚', title: 'Mr Chips', text: 'One school, a whole career.', test: s => s.career.yearsAtSchool >= 25 },
     { id: 'pastoral', emoji: '🫶', title: 'Safe Pair of Arms', text: 'Every homesick child knew where your door was.', test: s => s.hidden.karma >= 75 && s.flags.divmaster },
+    { id: 'joy', emoji: '✨', title: 'Lit Up the Room', text: 'You loved the job, and everyone could tell.', test: s => (s.counters.inspired || 0) >= 6 },
     { id: 'saint', emoji: '😇', title: 'Saint of the Common Room', text: 'Kind to everyone, always.', test: s => s.hidden.karma >= 85 },
     { id: 'touchline', emoji: '🏆', title: 'Legend of the Touchline', text: 'Your teams won and won.', test: s => (s.counters.wins || 0) >= 25 },
     { id: 'scholar', emoji: '🦉', title: 'Scholar', text: 'A truly great classroom teacher.', test: s => s.stats.teaching >= 90 },
@@ -1253,6 +1279,15 @@ input[type=range]{width:100%}
           { w: 35, by: { charisma: 0.5 }, byRel: { head: 0.5 }, text: 'You are on a final warning. One more slip and you are out.', fx: { rep: 15, morale: -10, flag: 'final_warning' } },
           { w: 65, text: 'The decision is final.', fx: { ending: 'sacked' } } ] },
         { label: 'Resign with dignity', text: 'You resign before they can sack you.', fx: { ending: 'quit' } },
+      ] },
+    { id: 'jaded', manual: true, emoji: '🌧️', title: 'Running on fumes', cooldown: 12,
+      text: 'You have not enjoyed a single day this term. You catch yourself reading job adverts for estate agents.',
+      choices: [
+        { label: 'Talk to someone you trust', outcomes: [
+          { w: 1, text: 'A long, honest chat with a colleague. Nothing is fixed, but you feel less alone.', fx: { morale: 14, patience: 2 } } ] },
+        { label: 'Drop a responsibility', show: { test: s => s.career.resp.length > 0 }, text: 'You give one thing up. The relief is immediate.', fx: { run: s => { const r = s.career.resp.pop(); delete s.flags[r]; }, morale: 10, rep: -2 } },
+        { label: 'Start looking elsewhere', text: 'You start reading the job adverts properly.', fx: { morale: 4, start: 'job_hunt' } },
+        { label: 'Keep your head down', text: 'You keep going. Something has to give, eventually.', fx: { morale: -3 } },
       ] },
     { id: 'retire_confirm', manual: true, emoji: '🎓', title: 'Retire?', text: 'After {years} years of chalk and fixtures, is it time?',
       choices: [{ label: 'Yes, retire now', text: 'You announce your retirement at the end of term.', fx: { ending: 'retire' } }, { label: 'Not yet', text: '', fx: { time: 0 } }] },
@@ -2627,6 +2662,7 @@ input[type=range]{width:100%}
     <p style="text-align:left;font-size:14px"><b>Time.</b> You get four ⏱ each half-term. Spend them in Activities, People and Career.</p>
     <p style="text-align:left;font-size:14px"><b>Energy.</b> Your job drains it every half-term (see Workload). Holidays give some back. Let it hit zero and you burn out.</p>
     <p style="text-align:left;font-size:14px"><b>Promotion.</b> Pass your two-year ECT induction, build Teaching and Reputation, then apply in Lent or early Summer when a post comes up.</p>
+    <p style="text-align:left;font-size:14px"><b>Morale.</b> At 72%+ you're in the zone: less drain and better performance. Two half-terms in a row makes you Inspired (+1 Time). If Energy runs out while Morale is 70%+, you get one second wind a year. At 30% or below you're Jaded: more drain, and three jaded half-terms brings a crisis.</p>
     <p style="text-align:left;font-size:14px"><b>Hidden stats.</b> Patience, Organisation, Charisma, Ambition and Karma shape every outcome. You only see them at the end.</p>
     <p style="text-align:left;font-size:14px"><b>Schools.</b> Each school plays differently. Some reward things they never mention.</p>
     <p style="text-align:left;font-size:13px;color:var(--muted)">Tap your crest for the sandbox: edit stats, fire events, rewind time.</p>
@@ -2684,7 +2720,7 @@ input[type=range]{width:100%}
         <div class="purse">Age ${S.me.age}<b>${P.money(S.money)}</b></div>
       </div>
       <div class="stats">${statHTML}
-        <div class="timebar"><span class="pips">Time ${pips}</span><span class="${danger ? 'warn' : ''}">Workload −${drain} energy${danger ? ' ⚠️' : ''}</span></div>
+        <div class="timebar"><span class="pips">Time ${pips}${(m => m ? `<span class="chip" title="${esc(m.tip)}">${esc(m.label)}</span>` : '')(P.mood(S))}</span><span class="${danger ? 'warn' : ''}">Workload −${drain} energy${danger ? ' ⚠️' : ''}</span></div>
       </div>
       <div class="journal" id="journal">${jl}</div>
       <nav class="nav">

@@ -346,7 +346,11 @@
     const sum = [];
     if (!fx) return sum;
     for (const k of VISIBLE) if (fx[k]) {
-      const before = s.stats[k]; s.stats[k] = clamp(before + fx[k]);
+      const before = s.stats[k];
+      let delta = fx[k];
+      // good moods are earned: morale gains shrink as morale rises
+      if (k === 'morale' && delta > 0 && before > 40) delta *= Math.max(0.2, (100 - before) / 60);
+      s.stats[k] = clamp(before + delta);
       const d = Math.round(s.stats[k] - before); if (d) sum.push({ k: STAT_LABEL[k], d });
     }
     for (const k of HIDDEN) if (fx[k]) s.hidden[k] = clamp(s.hidden[k] + fx[k]);
@@ -632,7 +636,8 @@
     if (s.flags.tutoring) d += 3;
     d -= (s.hidden.organisation - 50) * 0.08;
     if (s.me.age > 55) d += (s.me.age - 55) * 0.3;
-    return Math.max(8, d * smod(s, 'drainX', 1));
+    const mood = s.stats.morale >= 72 ? 0.9 : s.stats.morale <= 30 ? 1.1 : 1;
+    return Math.max(8, d * smod(s, 'drainX', 1) * mood);
   }
   function snapshot(s) {
     const copy = JSON.parse(JSON.stringify(Object.assign({}, s, { snaps: undefined })));
@@ -648,15 +653,28 @@
     // 1. the half-term's work
     const drain = workload(s);
     s.stats.energy = clamp(s.stats.energy - drain);
-    const burnt = s.stats.energy <= 0;
+    let burnt = s.stats.energy <= 0;
+    if (burnt && s.stats.morale >= 70 && !s.flags['wind_' + s.ay]) {
+      burnt = false; s.flags['wind_' + s.ay] = true;
+      s.stats.energy = 8; s.stats.morale = clamp(s.stats.morale - 15);
+      log(s, '💨 Second wind. You were running on empty, but you love the job too much to stop. (Morale −15)', 'sys');
+      s.counters.secondWinds = (s.counters.secondWinds || 0) + 1;
+    }
     if (s.stats.teaching < 80) s.stats.teaching = clamp(s.stats.teaching + (80 - s.stats.teaching) * 0.01 + (s.hidden.ambition - 50) * 0.004);
     const target = s.stats.teaching * 0.45 + s.hidden.organisation * 0.2 + s.stats.energy * 0.2 + s.stats.morale * 0.15;
-    s.career.perf = clamp(s.career.perf * 0.7 + target * 0.3);
+    const moodPerf = s.stats.morale >= 72 ? 5 : s.stats.morale <= 30 ? -5 : 0;
+    s.career.perf = clamp(s.career.perf * 0.7 + (target + moodPerf) * 0.3);
     const repTarget = 22 + s.career.perf * 0.45 + s.career.resp.length * 4 + ROLES[s.career.role].rank * 4 + (s.hidden.charisma - 50) * 0.1;
     s.stats.rep = clamp(s.stats.rep + (repTarget - s.stats.rep) * 0.06);
     const partner = byRole(s, 'partner');
     const moraleBase = 52 + smod(s, 'moraleBase', 0) + (s.stats.energy - 50) * 0.25 + (partner ? (partner.rel - 50) * 0.15 : -3) + (s.hidden.patience - 50) * 0.08 + (s.money < 0 ? -8 : 0);
-    s.stats.morale = clamp(s.stats.morale + (moraleBase - s.stats.morale) * 0.18);
+    s.stats.morale = clamp(s.stats.morale + (moraleBase - s.stats.morale) * 0.3);
+    s.moodHigh = s.stats.morale >= 72 ? (s.moodHigh || 0) + 1 : 0;
+    s.moodLow = s.stats.morale <= 30 ? (s.moodLow || 0) + 1 : 0;
+    const wasInspired = !!s.flags.inspired;
+    if (s.moodHigh >= 2) s.flags.inspired = true; else delete s.flags.inspired;
+    if (s.flags.inspired && !wasInspired) { log(s, '✨ You are inspired. Two half-terms of loving the job: +1 Time each half-term while it lasts.', 'sys'); s.counters.inspired = (s.counters.inspired || 0) + 1; }
+    if (!s.flags.inspired && wasInspired) log(s, 'The inspiration fades. Back to four ⏱ a half-term.', 'sys');
     for (const p of s.people) { // relationships drift
       if (p.role === 'partner') p.rel = clamp(p.rel - (s.tick - p.seen > 1 ? 4 : 1));
       else if (p.role === 'head' && smod(s, 'headDrift', null) != null) p.rel = clamp(p.rel + (smod(s, 'headDrift', 50) - p.rel) * 0.12);
@@ -675,7 +693,7 @@
     const frac = Math.min(0.98, h.rest + (hol ? hol.rest / 100 : 0) - (s.flags.resident && h.rest < 0.5 ? 0.08 : 0));
     const rest = (100 - s.stats.energy) * frac;
     s.stats.energy = clamp(s.stats.energy + rest);
-    s.stats.morale = clamp(s.stats.morale + rest / 8 + (hol ? hol.morale : 0));
+    s.stats.morale = clamp(s.stats.morale + (rest / 14 + (hol ? hol.morale : 0)) * Math.max(0.2, (100 - s.stats.morale) / 60));
     if (hol) log(s, `🧳 ${h.brk[0].toUpperCase() + h.brk.slice(1)}: ${hol.text}`, 'sys');
     else if (h.rest >= 0.6) log(s, `🏖️ The ${h.brk} arrive. You sleep until ten for a week.`, 'sys');
     s.holiday = null;
@@ -693,8 +711,9 @@
     if (s.stats.rep <= 3 && !s.pending.some(p => p.id === 'sacked')) startEvent(s, 'sacked');
     const due = s.queue.filter(q => q.at <= s.tick); s.queue = s.queue.filter(q => q.at > s.tick);
     due.forEach(q => startEvent(s, q.id, q.ctx || {}));
+    if (s.moodLow >= 3 && !s.pending.some(p => p.id === 'jaded')) { startEvent(s, 'jaded'); s.moodLow = 0; }
     rollEvents(s);
-    s.time = s.maxTime;
+    s.time = s.maxTime + (s.flags.inspired ? 1 : 0);
     s.counters.ticks = (s.counters.ticks || 0) + 1;
     return true;
   }
@@ -806,6 +825,7 @@
   function rewind(s, idx) { const snap = s.snaps && s.snaps[idx]; if (!snap) return null; const keep = s.snaps.slice(0, idx); const st = snap.state; st.snaps = keep; return st; }
 
   const API = {
+    mood: s => s.flags.inspired ? { k: 'inspired', label: '✨ Inspired', tip: '+1 Time' } : s.stats.morale >= 72 ? { k: 'zone', label: '🔥 In the zone', tip: 'Less drain, better performance' } : s.stats.morale <= 30 ? { k: 'jaded', label: '🌧️ Jaded', tip: 'More drain, worse performance' } : null,
     VISIBLE, HIDDEN, STAT_LABEL, HT, ROLES, LADDER, ENDINGS,
     rnd, ri, pick, chance, clamp, money, fmt, check, getVal,
     newGame, advance, choose, currentEvent, actions, doAction, personActions,

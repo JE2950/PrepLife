@@ -39,6 +39,7 @@
     <p style="text-align:left;font-size:14px"><b>Time.</b> You get four ⏱ each half-term. Spend them in Activities, People and Career.</p>
     <p style="text-align:left;font-size:14px"><b>Energy.</b> Your job drains it every half-term (see Workload). Holidays give some back. Let it hit zero and you burn out.</p>
     <p style="text-align:left;font-size:14px"><b>Promotion.</b> Pass your two-year ECT induction, build Teaching and Reputation, then apply in Lent or early Summer when a post comes up.</p>
+    <p style="text-align:left;font-size:14px"><b>Morale.</b> At 72%+ you're in the zone: less drain and better performance. Two half-terms in a row makes you Inspired (+1 Time). If Energy runs out while Morale is 70%+, you get one second wind a year. At 30% or below you're Jaded: more drain, and three jaded half-terms brings a crisis.</p>
     <p style="text-align:left;font-size:14px"><b>Hidden stats.</b> Patience, Organisation, Charisma, Ambition and Karma shape every outcome. You only see them at the end.</p>
     <p style="text-align:left;font-size:14px"><b>Schools.</b> Each school plays differently. Some reward things they never mention.</p>
     <p style="text-align:left;font-size:13px;color:var(--muted)">Tap your crest for the sandbox: edit stats, fire events, rewind time.</p>
@@ -96,7 +97,7 @@
         <div class="purse">Age ${S.me.age}<b>${P.money(S.money)}</b></div>
       </div>
       <div class="stats">${statHTML}
-        <div class="timebar"><span class="pips">Time ${pips}</span><span class="${danger ? 'warn' : ''}">Workload −${drain} energy${danger ? ' ⚠️' : ''}</span></div>
+        <div class="timebar"><span class="pips">Time ${pips}${(m => m ? `<span class="chip" title="${esc(m.tip)}">${esc(m.label)}</span>` : '')(P.mood(S))}</span><span class="${danger ? 'warn' : ''}">Workload −${drain} energy${danger ? ' ⚠️' : ''}</span></div>
       </div>
       <div class="journal" id="journal">${jl}</div>
       <nav class="nav">
