@@ -14,7 +14,7 @@ for (let life = 0; life < N; life++) {
       // resolve pending
       let g2 = 0;
       while (s.pending.length && !s.over && g2++ < 20) {
-        const ev = P.currentEvent(s);
+        const ev = P.currentEvent(s); if (!ev) break;
         const ok = ev.choices.filter(c => c.ok);
         if (!ok.length) { s.pending.shift(); continue; }
         // bot avoids quitting choices most of the time
@@ -45,7 +45,7 @@ for (let life = 0; life < N; life++) {
         if (!acts.length) break;
         P.doAction(s, acts[Math.floor(botRand() * acts.length)].id);
       }
-      while (s.pending.length && !s.over) { const ev = P.currentEvent(s); const ok = ev.choices.filter(c => c.ok); if (!ok.length) { s.pending.shift(); continue; } let c = ok[Math.floor(botRand() * ok.length)]; if (['retire_confirm', 'quit_confirm', 'breakup'].includes(ev.id)) c = ok[ok.length - 1]; if (ev.id === 'burnout') c = ok[0]; P.choose(s, c.i); }
+      while (s.pending.length && !s.over) { const ev = P.currentEvent(s); if (!ev) break; const ok = ev.choices.filter(c => c.ok); if (!ok.length) { s.pending.shift(); continue; } let c = ok[Math.floor(botRand() * ok.length)]; if (['retire_confirm', 'quit_confirm', 'breakup'].includes(ev.id)) c = ok[ok.length - 1]; if (ev.id === 'burnout') c = ok[0]; P.choose(s, c.i); }
       if (s.over) break;
       P.advance(s);
     }

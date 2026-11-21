@@ -405,6 +405,7 @@
         { label: 'Oh well', show: { test: (s, c) => !c.offer }, text: '', fx: { morale: -2 } },
       ] },
     { id: 'inspection', manual: true, emoji: '🔍', title: 'The inspectors are coming', tags: ['calendar'],
+      setup: (s, ctx, P) => { if (s.career.role === 'Head') { P.startEvent(s, 'head_inspection'); return false; } s.queue.push({ id: 'inspection', at: s.tick + P.ri(s, 18, 26), ctx: {} }); },
       text: 'The ISI phone on Monday. Inspectors arrive on Wednesday. The Head has gone pale.',
       choices: [
         { label: 'Rewrite every scheme of work', outcomes: [

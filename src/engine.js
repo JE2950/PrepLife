@@ -243,6 +243,7 @@
       case 'time': return s.time;
     }
     if (k.startsWith('c:')) return s.counters[k.slice(2)] || 0;
+    if (k.startsWith('sch:')) { if (!s.sch) initSch(s); return s.sch[k.slice(4)] || 0; }
     return 0;
   }
   function cmp(v, e) {
@@ -379,6 +380,10 @@
     }
     for (const k of HIDDEN) if (fx[k]) s.hidden[k] = clamp(s.hidden[k] + fx[k]);
     if (fx.money) { s.money += fx.money; sum.push({ k: 'Money', d: fx.money, money: true }); }
+    if (fx.sch) {
+      if (!s.sch) initSch(s);
+      for (const k in fx.sch) { const b = s.sch[k]; s.sch[k] = clamp(b + fx.sch[k]); const d = Math.round(s.sch[k] - b); if (d) sum.push({ k: SCH_LABEL[k], d }); }
+    }
     if (fx.perf) s.career.perf = clamp(s.career.perf + fx.perf);
     if (fx.time) s.time = Math.max(0, s.time + fx.time);
     if (fx.rel) for (const slot in fx.rel) {
@@ -430,8 +435,24 @@
 
   /* ---------- Events ---------- */
   const evById = id => D().events.find(e => e.id === id);
+  function patchEvents() {
+    const P = D().eventPatches; if (!P || D()._patched) return; D()._patched = true;
+    for (const id in P) { const ev = evById(id); if (!ev) continue; const p = P[id]; if (p.when) ev.when = Object.assign({}, ev.when || {}, p.when); if (p.tags) ev.tags = (ev.tags || []).concat(p.tags); if (p.weight != null) ev.weight = p.weight; }
+    const R = D().respPatches || {};
+    for (const r of D().resp) if (R[r.id]) r.show = Object.assign({}, r.show || {}, R[r.id]);
+  }
+  // How often each kind of event happens at each rank: ECT, Teacher, HoD/Housemaster, DoS, Deputy, Head
+  const TAG_BY_RANK = {
+    classroom: [1.2, 1, 0.85, 0.55, 0.35, 0.2], pupils: [1, 1, 0.9, 0.6, 0.4, 0.25], observation: [1.3, 1, 0.7, 0.2, 0, 0],
+    admin: [1, 1, 1, 1.2, 1.3, 0.8], kit: [1, 1, 0.9, 0.6, 0.4, 0.3], night: [1, 1, 1.2, 0.5, 0.4, 0.3],
+    slt: [0, 0, 0.4, 1.4, 1.6, 1.8], head: [0, 0, 0, 0.3, 0.6, 1.8], leadership: [0, 0, 0.8, 1.4, 1.6, 1.8],
+    commonroom: [1, 1, 1, 0.8, 0.55, 0.35], boarding: [1, 1, 1.1, 0.6, 0.45, 0.35], pastoral: [1, 1, 1, 0.85, 0.75, 0.6],
+    matron: [1, 1, 1, 0.6, 0.4, 0.3], deputy: [0, 0, 0, 0, 1.8, 0],
+  };
   function eventWeight(s, e, ctx) {
     let w = e.weight != null ? e.weight : 10;
+    const rk = ROLES[s.career.role].rank;
+    for (const t of (e.tags || [])) if (TAG_BY_RANK[t]) w *= TAG_BY_RANK[t][rk];
     for (const m of (e.mods || [])) if (check(s, m.when, ctx)) w *= m.x;
     return w;
   }
@@ -468,6 +489,7 @@
   }
 
   function rollEvents(s) {
+    patchEvents();
     const pool = D().events.filter(e => eligible(s, e));
     const pops = pool.filter(e => e.choices), pass = pool.filter(e => !e.choices);
     let nPop = s.pending.length ? 0 : wpick(s, [0, 1, 2], n => [22, 58, 20][n]);
@@ -491,9 +513,18 @@
     s.sincePopup = (gotPop || s.pending.length) ? 0 : s.sincePopup + 1;
   }
 
+  function revalidate(s, e, ctx) {
+    ctx.cast = ctx.cast || {};
+    for (const slot in ctx.cast) if (!s.people.some(p => p.id === ctx.cast[slot])) {
+      delete ctx.cast[slot];
+      if (!e.cast || !e.cast[slot]) return false;
+    }
+    return resolveCast(s, e.cast, ctx);
+  }
   function currentEvent(s) {
     const pnd = s.pending[0]; if (!pnd) return null;
     const e = evById(pnd.id); if (!e) { s.pending.shift(); return currentEvent(s); }
+    if (!revalidate(s, e, pnd.ctx)) { s.pending.shift(); return currentEvent(s); }
     return {
       id: e.id, emoji: e.emoji || '📜', title: fmt(s, e.title, pnd.ctx), text: fmt(s, e.text, pnd.ctx),
       choices: e.choices.filter(c => !c.show || check(s, c.show, pnd.ctx)).map((c, i) => ({
@@ -504,6 +535,7 @@
   function choose(s, i) {
     const pnd = s.pending[0]; if (!pnd) return null;
     const e = evById(pnd.id), c = e.choices[i];
+    if (!revalidate(s, e, pnd.ctx)) { s.pending.shift(); return null; }
     if (!c || (c.need && !check(s, c.need, pnd.ctx))) return null;
     const ctx = pnd.ctx;
     const o = rollOutcome(s, normOutcomes(c), ctx);
@@ -516,6 +548,7 @@
 
   /* ---------- Actions ---------- */
   function actions(s, tab) {
+    patchEvents();
     return D().actions.filter(a => a.tab === tab && check(s, a.show || a.when, {})).map(a => ({
       id: a.id, emoji: a.emoji, label: fmt(s, a.label, {}), sub: fmt(s, a.sub, {}), group: a.group || '',
       cost: a.cost != null ? a.cost : 1, ok: check(s, a.when, {}) && s.time >= (a.cost != null ? a.cost : 1) && (!a.need || check(s, a.need, {})),
@@ -619,6 +652,8 @@
     if (role === 'DoS' && !byRole(s, 'hod')) makePerson(s, 'hod');
     if (role === 'Housemaster' || (role === 'Head' && s.school.boarding)) s.home = { type: 'school', label: role === 'Head' ? "The Head's House" : 'Boarding house flat', cost: 0 };
     log(s, `You are now ${roleLabel(s)}.`, 'sys');
+    patchEvents();
+    for (const id of s.career.resp.slice()) { const r = findResp(s, id); if (r && r.show && !check(s, r.show, {})) { removeResp(s, id); log(s, `You hand over ${fmt(s, r.label)}: it is not a job for a ${roleLabel(s)}.`, 'sys'); } }
     const rv = s.people.find(p => p.rival);
     if (rv) { rv.rel = clamp(rv.rel - 5); log(s, `⚔️ ${dispName(rv)} congratulates you through gritted teeth.`, 'sys'); if (ROLES[role].rank > rv.rrank) s.flags.beatRival = true; }
   }
@@ -641,10 +676,12 @@
     s.career.history.push({ school: s.school.name, from: s.ay });
     if (s.home.type === 'school') s.home = { type: 'flat', label: 'Rented flat', cost: 1700 };
     staffSchool(s);
+    initSch(s);
     s.stats.rep = clamp(s.stats.rep - (promoted ? 3 : 10));
     log(s, `You start at ${s.school.name}, ${s.school.town}.`, 'sys');
   }
   function respList(s) {
+    patchEvents();
     return D().resp.filter(r => check(s, r.show, {})).map(r => ({
       id: r.id, emoji: r.emoji, label: fmt(s, r.label, {}), sub: fmt(s, r.sub, {}), on: s.career.resp.includes(r.id),
       ok: s.career.resp.includes(r.id) || (check(s, r.when, {}) && s.time >= 1), why: r.why || '', drain: r.drain,
@@ -708,6 +745,7 @@
     if (s.study) d += D().quals.find(q => q.id === s.study.id).drain || 0;
     d += s.people.filter(p => p.role === 'child' && p.age < 5).length * 3;
     if (s.flags.tutoring) d += 3;
+    if (s.delegated) d -= s.delegated;
     d -= (s.hidden.organisation - 50) * 0.08;
     if (s.me.age > 55) d += (s.me.age - 55) * 0.3;
     const mood = s.stats.morale >= 72 ? 0.9 : s.stats.morale <= 30 ? 1.1 : 1;
@@ -738,7 +776,8 @@
     const target = s.stats.teaching * 0.45 + s.hidden.organisation * 0.2 + s.stats.energy * 0.2 + s.stats.morale * 0.15;
     const moodPerf = s.stats.morale >= 72 ? 5 : s.stats.morale <= 30 ? -5 : 0;
     s.career.perf = clamp(s.career.perf * 0.7 + (target + moodPerf) * 0.3);
-    const repTarget = 22 + s.career.perf * 0.45 + s.career.resp.length * 4 + ROLES[s.career.role].rank * 4 + (s.hidden.charisma - 50) * 0.1;
+    const schPull = s.sch && ROLES[s.career.role].rank >= 4 ? (s.sch.staff - 55) * 0.08 + (s.sch.roll - 60) * 0.1 : 0;
+    const repTarget = 22 + schPull + s.career.perf * 0.45 + s.career.resp.length * 4 + ROLES[s.career.role].rank * 4 + (s.hidden.charisma - 50) * 0.1;
     s.stats.rep = clamp(s.stats.rep + (repTarget - s.stats.rep) * 0.06);
     const partner = byRole(s, 'partner');
     const moraleBase = 52 + smod(s, 'moraleBase', 0) + traitSum(s, 'morale') + (s.stats.energy - 50) * 0.25 + (partner ? (partner.rel - 50) * 0.15 : -3) + (s.hidden.patience - 50) * 0.08 + (s.money < 0 ? -8 : 0);
@@ -791,6 +830,7 @@
     if (s.moodLow >= 3 && !s.pending.some(p => p.id === 'jaded')) { startEvent(s, 'jaded'); s.moodLow = 0; }
     rollEvents(s);
     s.time = s.maxTime + (s.flags.inspired ? 1 : 0);
+    s.delegated = 0;
     s.counters.ticks = (s.counters.ticks || 0) + 1;
     return true;
   }
@@ -805,7 +845,7 @@
     s.career.years++; s.career.yearsInRole++; s.career.yearsAtSchool++;
     // ECT induction (two years)
     if (s.career.role === 'ECT' && s.career.years >= 2) {
-      if (s.stats.teaching >= 38 && s.stats.rep >= 25) { s.career.role = 'Teacher'; s.career.yearsInRole = 0; s.career.peak = 'Teacher'; log(s, '✅ You pass your ECT induction. You are a fully qualified teacher.', 'sys'); s.stats.morale = clamp(s.stats.morale + 8); }
+      if (s.stats.teaching >= ((s.counters.portfolio || 0) >= 4 ? 32 : 38) && s.stats.rep >= 25) { s.career.role = 'Teacher'; s.career.yearsInRole = 0; s.career.peak = 'Teacher'; log(s, '✅ You pass your ECT induction. You are a fully qualified teacher.', 'sys'); s.stats.morale = clamp(s.stats.morale + 8); }
       else if (++s.career.inductionFails >= 2) { endGame(s, 'induction'); return; }
       else log(s, '⚠️ Your induction is extended by a year. The mentor meetings continue.', 'sys');
     }
@@ -842,11 +882,28 @@
     const a = s.me.age, risk = a < 50 ? 0.0004 : 0.0004 * Math.exp((a - 50) * 0.12) * (s.stats.energy < 20 ? 2 : 1);
     if (chance(s, risk)) { endGame(s, 'died'); return; }
     if (a >= 68) { endGame(s, 'retire'); return; }
+    schoolYear(s);
     buildReview(s);
     yearStart(s);
   }
+  /* ---------- School dashboard (matters from SLT up; the Head answers for it) ---------- */
+  const SCH_LABEL = { roll: 'Pupil numbers', staff: 'Staff morale', finance: 'Finances' };
+  function initSch(s) {
+    const p = s.school.prestige;
+    s.sch = { roll: clamp(50 + p * 7 + ri(s, -6, 6)), staff: clamp(smod(s, 'staffRel', 50) + 8 + ri(s, -5, 5)), finance: clamp(45 + p * 6 + ri(s, -6, 6)) };
+  }
+  function schoolYear(s) {
+    if (!s.sch) initSch(s);
+    const x = s.sch, rk = ROLES[s.career.role].rank;
+    const head = rk === 5 ? 1 : 0.4; // how much the year's drift is down to you
+    x.roll = clamp(x.roll + ((s.stats.rep - 55) * 0.06 + (x.staff - 55) * 0.04 + ri(s, -4, 3)) * head);
+    x.finance = clamp(x.finance + (x.roll - 62) * 0.12 + ri(s, -3, 3));
+    x.staff = clamp(x.staff + (55 - x.staff) * 0.15 + ri(s, -3, 3));
+    if (rk === 5 && (x.roll < 32 || x.finance < 22) && !s.flags['govvote_' + s.ay]) { s.flags['govvote_' + s.ay] = true; startEvent(s, 'governors_confidence'); }
+  }
   function yearStart(s) {
-    s.yr = { c: JSON.parse(JSON.stringify(s.counters)), worth: netWorth(s), rep: s.stats.rep, teaching: s.stats.teaching, role: s.career.role, school: s.school.name, moraleSum: 0, n: 0, ay: s.ay };
+    if (!s.sch) initSch(s);
+    s.yr = { sch: Object.assign({}, s.sch), c: JSON.parse(JSON.stringify(s.counters)), worth: netWorth(s), rep: s.stats.rep, teaching: s.stats.teaching, role: s.career.role, school: s.school.name, moraleSum: 0, n: 0, ay: s.ay };
   }
   function buildReview(s) {
     const y = s.yr; if (!y || !y.n) return;
@@ -855,6 +912,7 @@
       year: y.ay + '/' + String((y.ay + 1) % 100).padStart(2, '0'), age: s.me.age - 1, school: y.school, roleStart: y.role, roleEnd: s.career.role,
       morale: Math.round(y.moraleSum / y.n), rep: Math.round(s.stats.rep - y.rep), teaching: Math.round(s.stats.teaching - y.teaching),
       worth: Math.round(netWorth(s) - y.worth), wins: d('wins'), losses: d('losses'), scholarships: d('scholarships'), letters: d('letters'),
+      sch: ROLES[s.career.role].rank >= 3 && y.sch ? { roll: Math.round(s.sch.roll - y.sch.roll), staff: Math.round(s.sch.staff - y.sch.staff), finance: Math.round(s.sch.finance - y.sch.finance) } : null,
       detentions: d('detentions'), leavers: d('leavers'), promotions: d('promotions'), inspired: d('inspired'), burnouts: d('burnouts'), cups: d('croquetCups'), pews: d('pews'),
     };
     const prev = (s.reviews || [])[s.reviews.length - 1];
@@ -936,6 +994,7 @@
   function rewind(s, idx) { const snap = s.snaps && s.snaps[idx]; if (!snap) return null; const keep = s.snaps.slice(0, idx); const st = snap.state; st.snaps = keep; return st; }
 
   const API = {
+    SCH_LABEL, initSch,
     myTraits, hasTrait, traitSum, rivalTakesJob, buildReview,
     mood: s => s.flags.inspired ? { k: 'inspired', label: '✨ Inspired', tip: '+1 Time' } : s.stats.morale >= 72 ? { k: 'zone', label: '🔥 In the zone', tip: 'Less drain, better performance' } : s.stats.morale <= 30 ? { k: 'jaded', label: '🌧️ Jaded', tip: 'More drain, worse performance' } : null,
     VISIBLE, HIDDEN, STAT_LABEL, HT, ROLES, LADDER, ENDINGS,

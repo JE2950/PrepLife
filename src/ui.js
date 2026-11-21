@@ -92,6 +92,7 @@
     <p style="text-align:left;font-size:14px"><b>Tap Next ½</b> to move on one half-term. Six per school year, from Michaelmas to the summer holidays.</p>
     <p style="text-align:left;font-size:14px"><b>Time.</b> You get four ⏱ each half-term. Spend them in Activities, People and Career.</p>
     <p style="text-align:left;font-size:14px"><b>Energy.</b> Your job drains it every half-term (see Workload). Holidays give some back. Let it hit zero and you burn out.</p>
+    <p style="text-align:left;font-size:14px"><b>Your role.</b> Each rank has its own activities (top of Activities), events and powers. Leaders sit on hiring panels, decide promotions and can delegate. SLT see a school dashboard; as Head you answer to the governors for it.</p>
     <p style="text-align:left;font-size:14px"><b>Promotion.</b> Pass your two-year ECT induction, build Teaching and Reputation, then apply in Lent or early Summer: for a post at your school when one comes up, or from the job adverts at other schools. Headships are always elsewhere.</p>
     <p style="text-align:left;font-size:14px"><b>Morale.</b> At 72%+ you're in the zone: less drain and better performance. Two half-terms in a row makes you Inspired (+1 Time). If Energy runs out while Morale is 70%+, you get one second wind a year. At 30% or below you're Jaded: more drain, and three jaded half-terms brings a crisis.</p>
     <p style="text-align:left;font-size:14px"><b>Hidden stats.</b> Patience, Organisation, Charisma, Ambition and Karma shape every outcome. You only see them at the end.</p>
@@ -211,6 +212,7 @@
     if (r.cups) cells.push(cell('Croquet trophies', r.cups));
     if (r.inspired) cells.push(cell('Times inspired', r.inspired));
     if (r.burnouts) cells.push(cell('Burnouts', r.burnouts));
+    if (r.sch) { cells.push(cell('Pupil numbers', sign(r.sch.roll))); cells.push(cell('Staff morale', sign(r.sch.staff))); cells.push(cell('Finances', sign(r.sch.finance))); }
     const roleLine = r.roleStart !== r.roleEnd ? `${P.roleLabel(S, r.roleStart)} → ${P.roleLabel(S)}` : P.roleLabel(S);
     const m = document.createElement('div'); m.className = 'modal';
     m.innerHTML = `<div class="pop" style="border-top-color:var(--gold);max-height:88vh;overflow-y:auto"><div class="big">📅</div><h2>The ${esc(r.year)} year</h2>
@@ -292,6 +294,10 @@
       <div class="kv"><span>Performance</span><span>${Math.round(c.perf)}%</span></div>
       ${P.myTraits(S).map(t => `<div class="kv"><span>${esc(t.emoji)} ${esc(t.label)}</span><span style="text-align:right;font-size:12px">＋ ${esc(t.perk)}<br>− ${esc(t.drawback)}</span></div>`).join('')}
       ${c.role === 'ECT' ? `<div class="kv"><span>Induction</span><span>Teaching 38+ by end of year 2</span></div>` : ''}</div>`;
+    if (P.ROLES[c.role].rank >= 3 && S.sch) {
+      const bar = (k) => `<div class="stat" style="margin:6px 0"><div class="row"><span>${esc(P.SCH_LABEL[k])}</span><b>${Math.round(S.sch[k])}%</b></div><div class="bar"><i style="width:${S.sch[k]}%;background:${barColour(S.sch[k])}"></i></div></div>`;
+      h += `<div class="card"><h3>${c.role === 'Head' ? 'Your school' : 'The school'}</h3>${bar('roll')}${bar('staff')}${bar('finance')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${c.role === 'Head' ? 'The governors watch these. If numbers or finances collapse, they will ask questions.' : 'As SLT you shape these. The Head answers for them.'}</div></div>`;
+    }
     const lad = P.ladder(S);
     h += `<div class="grp">Promotion</div>`;
     if (!lad.length) h += `<div class="card" style="font-size:13.5px">${c.role === 'ECT' ? 'Pass your induction first.' : c.role === 'Head' ? 'You are at the top.' : c.role === 'Deputy' ? 'Headships are always at another school. Watch the job adverts below.' : 'No internal promotion from here. Watch the job adverts below.'}</div>`;
