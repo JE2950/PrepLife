@@ -92,7 +92,7 @@
     <p style="text-align:left;font-size:14px"><b>Tap Next ½</b> to move on one half-term. Six per school year, from Michaelmas to the summer holidays.</p>
     <p style="text-align:left;font-size:14px"><b>Time.</b> You get four ⏱ each half-term. Spend them in Activities, People and Career.</p>
     <p style="text-align:left;font-size:14px"><b>Energy.</b> Your job drains it every half-term (see Workload). Holidays give some back. Let it hit zero and you burn out.</p>
-    <p style="text-align:left;font-size:14px"><b>Promotion.</b> Pass your two-year ECT induction, build Teaching and Reputation, then apply in Lent or early Summer when a post comes up.</p>
+    <p style="text-align:left;font-size:14px"><b>Promotion.</b> Pass your two-year ECT induction, build Teaching and Reputation, then apply in Lent or early Summer: for a post at your school when one comes up, or from the job adverts at other schools. Headships are always elsewhere.</p>
     <p style="text-align:left;font-size:14px"><b>Morale.</b> At 72%+ you're in the zone: less drain and better performance. Two half-terms in a row makes you Inspired (+1 Time). If Energy runs out while Morale is 70%+, you get one second wind a year. At 30% or below you're Jaded: more drain, and three jaded half-terms brings a crisis.</p>
     <p style="text-align:left;font-size:14px"><b>Hidden stats.</b> Patience, Organisation, Charisma, Ambition and Karma shape every outcome. You only see them at the end.</p>
     <p style="text-align:left;font-size:14px"><b>Schools.</b> Each school plays differently. Some reward things they never mention.</p>
@@ -294,10 +294,17 @@
       ${c.role === 'ECT' ? `<div class="kv"><span>Induction</span><span>Teaching 38+ by end of year 2</span></div>` : ''}</div>`;
     const lad = P.ladder(S);
     h += `<div class="grp">Promotion</div>`;
-    if (!lad.length) h += `<div class="card" style="font-size:13.5px">${c.role === 'ECT' ? 'Pass your induction first.' : c.role === 'Head' ? 'You are at the top.' : 'No promotion routes from here.'}</div>`;
+    if (!lad.length) h += `<div class="card" style="font-size:13.5px">${c.role === 'ECT' ? 'Pass your induction first.' : c.role === 'Head' ? 'You are at the top.' : c.role === 'Deputy' ? 'Headships are always at another school. Watch the job adverts below.' : 'No internal promotion from here. Watch the job adverts below.'}</div>`;
     for (const L of lad) {
       const status = L.applied ? 'Applied this year' : !L.vacant ? 'No vacancy this year' : ![2, 3, 4].includes(S.ht) ? 'Applications: Lent and Summer ½1' : '';
       h += `<button class="item" data-apply="${L.role}" ${L.ok ? '' : 'disabled'}><span class="e">📈</span><span class="t"><b>Apply: ${esc(L.label)}${L.external ? ' (another school)' : ''}</b><small>${L.reqs.map(r => `<span class="req ${r.ok ? 'ok' : 'no'}">${r.ok ? '✓' : '✗'} ${esc(r.label)}</span>`).join('')}</small>${status ? `<small>${esc(status)}</small>` : ''}</span><span class="r"><b style="color:var(--green)">1 ⏱</b></span></button>`;
+    }
+    const ads = P.advertList(S);
+    h += `<div class="grp">Job adverts · other schools</div>`;
+    if (!ads.length) h += `<div class="card" style="font-size:13.5px">${[2, 3, 4].includes(S.ht) ? 'No adverts for your next step this year.' : 'New adverts appear at the start of the Lent term. Moving for a promotion costs less Reputation than a sideways move, and needs one year less experience.'}</div>`;
+    for (const a of ads) {
+      const status = a.applied ? 'Applied' : !a.valid ? 'No longer relevant' : ![2, 3, 4].includes(S.ht) ? 'Closed' : '';
+      h += `<button class="item" data-advert="${a.id}" ${a.ok ? '' : 'disabled'}><span class="e">📰</span><span class="t"><b>${esc(a.label)} · ${esc(a.school)}</b><small>${'★'.repeat(a.stars)} ${esc(a.blurb)}</small><small>${a.reqs.map(r => `<span class="req ${r.ok ? 'ok' : 'no'}">${r.ok ? '✓' : '✗'} ${esc(r.label)}</span>`).join('')}</small>${status ? `<small>${esc(status)}</small>` : ''}</span><span class="r"><b style="color:var(--green)">1 ⏱</b></span></button>`;
     }
     h += `<div class="grp">Responsibilities</div>`;
     for (const r of P.respList(S)) h += item({ e: r.emoji, t: r.label, s: `${r.sub} · −${r.drain} energy per half-term`, r: r.on ? 'Give up' : costTag(1, r.ok, r.why), attrs: `data-resp="${r.id}"`, dis: !r.ok, on: r.on });
@@ -373,6 +380,7 @@
     sc.querySelectorAll('[data-pact]').forEach(b => b.onclick = () => { const r = P.doAction(S, b.dataset.pact, sheet.person); if (r && r.started) sheet = null; after(r); });
     sc.querySelectorAll('[data-person]').forEach(b => b.onclick = () => { sheet = { person: b.dataset.person }; render(); });
     sc.querySelectorAll('[data-apply]').forEach(b => b.onclick = () => { if (P.apply(S, b.dataset.apply)) { sheet = null; after(null); } });
+    sc.querySelectorAll('[data-advert]').forEach(b => b.onclick = () => { if (P.applyAdvert(S, b.dataset.advert)) { sheet = null; after(null); } });
     sc.querySelectorAll('[data-resp]').forEach(b => b.onclick = () => { P.toggleResp(S, b.dataset.resp); after(null); });
     sc.querySelectorAll('[data-qual]').forEach(b => b.onclick = () => { P.startQual(S, b.dataset.qual); after(null); });
     sc.querySelectorAll('[data-hol]').forEach(b => b.onclick = () => { P.setHoliday(S, b.dataset.hol); after(null); });

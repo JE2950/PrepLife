@@ -26,6 +26,7 @@ for (let life = 0; life < N; life++) {
       if (s.over) break;
       // career moves
       for (const L of P.ladder(s)) if (L.ok && botRand() < 0.6) { P.apply(s, L.role); break; }
+      if (!s.pending.length) for (const a of P.advertList(s)) if (a.ok && botRand() < 0.5) { P.applyAdvert(s, a.id); break; }
       for (const r of P.respList(s)) if (!r.on && r.ok && s.career.resp.length < 3 && botRand() < 0.08) P.toggleResp(s, r.id);
       for (const q of P.quals(s)) if (q.ok && botRand() < 0.05) P.startQual(s, q.id);
       if (botRand() < 0.15 && s.money > 2000) P.setHoliday(s, D.holidays[1 + Math.floor(botRand() * 4)].id);

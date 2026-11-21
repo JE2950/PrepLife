@@ -5,16 +5,19 @@
   const D = root.PSL_DATA = {};
   // harder interviews for senior posts
   // Hambrook quietly rewards the pew; non-churchgoers are slightly penalised there
-  const RANKPEN = (s, ctx, P) => -P.ROLES[ctx.target].rank * 11 + P.traitSum(s, 'interview') + (s.school.id === 'hambrook' && !(ctx.newSchool) ? Math.min(30, (s.counters.pews || 0) * 1.5) - 8 : 0);
+  // Interview odds. Mudgrove promotes its own; Hambrook prefers outsiders (unless you sit in the right pew).
+  const schoolMod = (id, k) => { const t = D.schools.find(x => x.id === id); return (t && t.mods && t.mods[k]) || 0; };
+  const RANKPEN = (s, ctx, P) => -P.ROLES[ctx.target].rank * 11 - (ctx.target === 'Head' ? 12 : 0) + P.traitSum(s, 'interview')
+    + (ctx.newSchool ? -12 + schoolMod(ctx.newSchool.id, 'externalBonus') : schoolMod(s.school.id, 'internalBonus')) + (s.school.id === 'hambrook' && !(ctx.newSchool) ? Math.min(30, (s.counters.pews || 0) * 1.5) - 8 : 0);
 
   /* ---------- The four schools ---------- */
   D.schools = [
     { id: 'mudgrove', name: 'Mudgrove', nick: 'Mudders', town: 'in the Berkshire woods', boarding: true, gender: 'boys', prestige: 4,
-      blurb: 'Small, old-fashioned and close-knit. Handbells, Latin grace, a brilliant Head. Everyone is on the same team.',
-      crest: { fill: '#2f5d46', band: '#f1d38a', ink: '#f1d38a', letter: 'M' }, grudge: 'Hambrook', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 0.7, drainX: 1.0 } },
+      blurb: 'Small, old-fashioned and close-knit. Handbells, Latin grace, a brilliant Head. Everyone is on the same team, and the school promotes its own.',
+      crest: { fill: '#2f5d46', band: '#f1d38a', ink: '#f1d38a', letter: 'M' }, grudge: 'Hambrook', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 1.35, drainX: 1.0, internalBonus: 10, advertX: 0.35, externalBonus: -10 } },
     { id: 'hambrook', name: 'Hambrook', nick: 'Hambrook', town: 'near Ascot', boarding: true, gender: 'co-ed', prestige: 5,
-      blurb: 'Shiny, polished, famous parents. A Head who runs it like a CEO and an SLT barely keeping afloat.',
-      crest: { fill: '#e6eaf0', band: '#18233d', ink: '#18233d', letter: 'H' }, grudge: 'Mudgrove', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 1.2, drainX: 1.08 } },
+      blurb: 'Shiny, polished, famous parents. A Head who runs it like a CEO, an SLT barely keeping afloat, and a habit of hiring from outside.',
+      crest: { fill: '#e6eaf0', band: '#18233d', ink: '#18233d', letter: 'H' }, grudge: 'Mudgrove', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 0.6, drainX: 1.08, internalBonus: -6, advertX: 2.2, externalBonus: 8 } },
     { id: 'thornbury', name: 'Thornbury Court', nick: 'Thornbury', town: 'on the Wiltshire Downs', boarding: true, gender: 'co-ed', prestige: 3,
       blurb: 'Sport first, second and third. The Head of Games has more power than the Head.',
       crest: { fill: '#7a1f2b', band: '#ffffff', ink: '#ffffff', letter: 'T' }, grudge: 'Pelham Grange', mods: { payX: 1.0, moraleBase: 0, headRel: 50, staffRel: 52, vacX: 1.0, drainX: 1.05 } },
@@ -63,6 +66,7 @@
     { id: 'wedding', emoji: '💒', title: 'Wedding bells', desc: 'Get married', test: s => !!s.flags.married },
     { id: 'goodboy', emoji: '🐕', title: 'Good boy', desc: 'Get a house dog', test: s => !!s.flags.dog },
     { id: 'howlers', emoji: '🏛️', title: 'Lost in translation', desc: 'Collect fifteen howlers', test: s => (s.fired.howler_latin || 0) + (s.fired.howler_french || 0) + (s.fired.howler_general || 0) >= 15 },
+    { id: 'hopper', emoji: '🪜', title: 'Ladder hopper', desc: 'Win a promotion by moving to another school', test: s => !!s.flags.promotedByMove },
     { id: 'beatrival', emoji: '🥇', title: 'One up', desc: 'Get promoted above your rival', test: s => !!s.flags.beatRival },
     { id: 'rivalboss', emoji: '😬', title: 'Awkward', desc: 'Your rival becomes your boss', test: s => !!s.flags.rival_above },
     { id: 'cameback', emoji: '🎓', title: 'They came back', desc: 'A former pupil returns', test: s => c_(s, 'alumniBack') >= 1 },
@@ -328,7 +332,7 @@
         { label: 'Ask {matron} for directions', text: '{matron} walks you there and tells you which colleagues to avoid.', fx: { rel: { matron: 8 }, morale: 2 } },
       ] },
     { id: 'interview', manual: true, emoji: '🪑', title: 'Interview: {target}', tags: ['system', 'career'],
-      text: 'The panel for {target} sits in a row. {head} asks what you would change in your first year.',
+      text: (s, ctx) => ctx.newSchool ? 'You drive to {newschool} for the {target} interview. A panel of five, including two governors, asks what you would change in your first year.' : 'The panel for {target} sits in a row. {head} asks what you would change in your first year.',
       choices: [
         { label: '"Everything. It needs shaking up."', outcomes: [
           { w: 25, by: { charisma: 0.5, rep: 0.6, ambition: 0.4 }, wfn: RANKPEN, text: 'Bold. The panel loves it. You get the job.', fx: { promote: true, morale: 12, count: 'promotions' } },

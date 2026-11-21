@@ -554,7 +554,7 @@
     const out = [];
     for (const r in LADDER) {
       const L = LADDER[r];
-      if (!L.from.includes(s.career.role)) continue;
+      if (!L.from.includes(s.career.role) || L.external) continue;
       if (L.boarding && !s.school.boarding) continue;
       const reqs = [{ label: `${L.years}+ years teaching`, ok: s.career.years >= L.years }];
       for (const k in L.need) reqs.push({ label: `${STAT_LABEL[k]} ${L.need[k]}+`, ok: s.stats[k] >= L.need[k] });
@@ -574,9 +574,43 @@
     startEvent(s, 'interview', ctx);
     return true;
   }
+  /* ---------- Job adverts at other schools (Lent to early Summer) ---------- */
+  function generateAdverts(s) {
+    s.adverts = [];
+    const roles = Object.keys(LADDER).filter(r => LADDER[r].from.includes(s.career.role));
+    if (!roles.length) return;
+    const others = D().schools.filter(x => x.id !== s.school.id);
+    const pool = [];
+    for (const sc of others) for (const r of roles) {
+      if (LADDER[r].boarding && !sc.boarding) continue;
+      pool.push({ school: sc.id, role: r });
+    }
+    const advX = id => { const t = D().schools.find(x => x.id === id); return (t && t.mods && t.mods.advertX) || 1; };
+    for (const ad of pool) if (chance(s, Math.min(0.9, (ad.role === 'Head' ? 0.3 : 0.2) * advX(ad.school)))) s.adverts.push(Object.assign({ applied: false, id: 'ad' + s.tick + s.adverts.length }, ad));
+    if (!s.adverts.length && pool.length && chance(s, 0.5)) s.adverts.push(Object.assign({ applied: false, id: 'ad' + s.tick }, pick(s, pool)));
+    s.adverts = s.adverts.slice(0, 2);
+    if (s.adverts.length) log(s, `📰 The Lent job adverts are out: ${s.adverts.map(a => roleLabel(s, a.role) + ' at ' + D().schools.find(x => x.id === a.school).name).join('; ')}.`, 'sys');
+  }
+  function advertList(s) {
+    return (s.adverts || []).map(ad => {
+      const L = LADDER[ad.role], sc = D().schools.find(x => x.id === ad.school);
+      const yrs = ad.role === 'Head' ? L.years : Math.max(1, L.years - 1);
+      const reqs = [{ label: `${yrs}+ years teaching`, ok: s.career.years >= yrs }];
+      for (const k in L.need) reqs.push({ label: `${STAT_LABEL[k]} ${L.need[k]}+`, ok: s.stats[k] >= L.need[k] });
+      const stillValid = L.from.includes(s.career.role) && sc.id !== s.school.id;
+      return { id: ad.id, role: ad.role, label: roleLabel(s, ad.role), school: sc.name, schoolId: sc.id, blurb: sc.blurb, stars: sc.prestige, reqs, applied: ad.applied, valid: stillValid,
+        ok: stillValid && !ad.applied && reqs.every(x => x.ok) && s.time >= 1 && [2, 3, 4].includes(s.ht) && !s.over && !s.pending.length };
+    });
+  }
+  function applyAdvert(s, id) {
+    const a = advertList(s).find(x => x.id === id); if (!a || !a.ok) return null;
+    s.time -= 1; s.adverts.find(x => x.id === id).applied = true;
+    startEvent(s, 'interview', { target: a.role, newSchool: makeSchool(s, null, a.schoolId), advert: true });
+    return true;
+  }
   function promote(s, role, ctx) {
     if (!ROLES[role]) return;
-    if (ctx && ctx.newSchool && LADDER[role] && LADDER[role].external) moveSchool(s, ctx.newSchool, role);
+    if (ctx && ctx.newSchool) { moveSchool(s, ctx.newSchool, role, true); s.flags.promotedByMove = true; }
     s.career.role = role; s.career.yearsInRole = 0;
     if (ROLES[role].rank > ROLES[s.career.peak].rank) s.career.peak = role;
     // remove the person who used to hold the post
@@ -597,7 +631,7 @@
     s.stats.morale = clamp(s.stats.morale - 4); rv.rel = clamp(rv.rel - 4);
     s.counters.rivalBeatYou = (s.counters.rivalBeatYou || 0) + 1;
   }
-  function moveSchool(s, school, role) {
+  function moveSchool(s, school, role, promoted) {
     stashStaff(s);
     if (hasTrait(s, 'local') && (s.counters.schools || 1) === 1) { s.stats.morale = clamp(s.stats.morale - 12); log(s, 'Leaving the school you went to as a child hurts more than you expected. (Morale −12)', 'sys'); }
     s.school = school || makeSchool(s, s.school.id);
@@ -607,7 +641,7 @@
     s.career.history.push({ school: s.school.name, from: s.ay });
     if (s.home.type === 'school') s.home = { type: 'flat', label: 'Rented flat', cost: 1700 };
     staffSchool(s);
-    s.stats.rep = clamp(s.stats.rep - 10);
+    s.stats.rep = clamp(s.stats.rep - (promoted ? 3 : 10));
     log(s, `You start at ${s.school.name}, ${s.school.town}.`, 'sys');
   }
   function respList(s) {
@@ -743,6 +777,8 @@
     if (s.ht === 0) { s.ay++; s.me.age++; }
     newSection(s);
     if (s.ht === 0) newYear(s);
+    if (!s.over && s.ht === 2) generateAdverts(s);
+    if (s.ht === 0) s.adverts = [];
     if (s.over) return true;
     // 4. money
     const b = budget(s);
@@ -905,7 +941,7 @@
     VISIBLE, HIDDEN, STAT_LABEL, HT, ROLES, LADDER, ENDINGS,
     rnd, ri, pick, chance, clamp, money, fmt, check, getVal,
     newGame, advance, choose, currentEvent, actions, doAction, personActions,
-    ladder, apply, respList, toggleResp, quals, startQual, salary, budget, netWorth, annualNet,
+    ladder, apply, advertList, applyAdvert, generateAdverts, respList, toggleResp, quals, startQual, salary, budget, netWorth, annualNet,
     setHoliday, housing, setHome, startEvent, forceEvent, sandboxSet, rewind, endGame,
     makeSchool, dispName, personRoleLabel, roleLabel, htLabel, myName, sport, byRole, makePerson, addPupil, workload,
   };

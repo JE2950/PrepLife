@@ -699,7 +699,7 @@ input[type=range]{width:100%}
     const out = [];
     for (const r in LADDER) {
       const L = LADDER[r];
-      if (!L.from.includes(s.career.role)) continue;
+      if (!L.from.includes(s.career.role) || L.external) continue;
       if (L.boarding && !s.school.boarding) continue;
       const reqs = [{ label: `${L.years}+ years teaching`, ok: s.career.years >= L.years }];
       for (const k in L.need) reqs.push({ label: `${STAT_LABEL[k]} ${L.need[k]}+`, ok: s.stats[k] >= L.need[k] });
@@ -719,9 +719,43 @@ input[type=range]{width:100%}
     startEvent(s, 'interview', ctx);
     return true;
   }
+  /* ---------- Job adverts at other schools (Lent to early Summer) ---------- */
+  function generateAdverts(s) {
+    s.adverts = [];
+    const roles = Object.keys(LADDER).filter(r => LADDER[r].from.includes(s.career.role));
+    if (!roles.length) return;
+    const others = D().schools.filter(x => x.id !== s.school.id);
+    const pool = [];
+    for (const sc of others) for (const r of roles) {
+      if (LADDER[r].boarding && !sc.boarding) continue;
+      pool.push({ school: sc.id, role: r });
+    }
+    const advX = id => { const t = D().schools.find(x => x.id === id); return (t && t.mods && t.mods.advertX) || 1; };
+    for (const ad of pool) if (chance(s, Math.min(0.9, (ad.role === 'Head' ? 0.3 : 0.2) * advX(ad.school)))) s.adverts.push(Object.assign({ applied: false, id: 'ad' + s.tick + s.adverts.length }, ad));
+    if (!s.adverts.length && pool.length && chance(s, 0.5)) s.adverts.push(Object.assign({ applied: false, id: 'ad' + s.tick }, pick(s, pool)));
+    s.adverts = s.adverts.slice(0, 2);
+    if (s.adverts.length) log(s, `📰 The Lent job adverts are out: ${s.adverts.map(a => roleLabel(s, a.role) + ' at ' + D().schools.find(x => x.id === a.school).name).join('; ')}.`, 'sys');
+  }
+  function advertList(s) {
+    return (s.adverts || []).map(ad => {
+      const L = LADDER[ad.role], sc = D().schools.find(x => x.id === ad.school);
+      const yrs = ad.role === 'Head' ? L.years : Math.max(1, L.years - 1);
+      const reqs = [{ label: `${yrs}+ years teaching`, ok: s.career.years >= yrs }];
+      for (const k in L.need) reqs.push({ label: `${STAT_LABEL[k]} ${L.need[k]}+`, ok: s.stats[k] >= L.need[k] });
+      const stillValid = L.from.includes(s.career.role) && sc.id !== s.school.id;
+      return { id: ad.id, role: ad.role, label: roleLabel(s, ad.role), school: sc.name, schoolId: sc.id, blurb: sc.blurb, stars: sc.prestige, reqs, applied: ad.applied, valid: stillValid,
+        ok: stillValid && !ad.applied && reqs.every(x => x.ok) && s.time >= 1 && [2, 3, 4].includes(s.ht) && !s.over && !s.pending.length };
+    });
+  }
+  function applyAdvert(s, id) {
+    const a = advertList(s).find(x => x.id === id); if (!a || !a.ok) return null;
+    s.time -= 1; s.adverts.find(x => x.id === id).applied = true;
+    startEvent(s, 'interview', { target: a.role, newSchool: makeSchool(s, null, a.schoolId), advert: true });
+    return true;
+  }
   function promote(s, role, ctx) {
     if (!ROLES[role]) return;
-    if (ctx && ctx.newSchool && LADDER[role] && LADDER[role].external) moveSchool(s, ctx.newSchool, role);
+    if (ctx && ctx.newSchool) { moveSchool(s, ctx.newSchool, role, true); s.flags.promotedByMove = true; }
     s.career.role = role; s.career.yearsInRole = 0;
     if (ROLES[role].rank > ROLES[s.career.peak].rank) s.career.peak = role;
     // remove the person who used to hold the post
@@ -742,7 +776,7 @@ input[type=range]{width:100%}
     s.stats.morale = clamp(s.stats.morale - 4); rv.rel = clamp(rv.rel - 4);
     s.counters.rivalBeatYou = (s.counters.rivalBeatYou || 0) + 1;
   }
-  function moveSchool(s, school, role) {
+  function moveSchool(s, school, role, promoted) {
     stashStaff(s);
     if (hasTrait(s, 'local') && (s.counters.schools || 1) === 1) { s.stats.morale = clamp(s.stats.morale - 12); log(s, 'Leaving the school you went to as a child hurts more than you expected. (Morale −12)', 'sys'); }
     s.school = school || makeSchool(s, s.school.id);
@@ -752,7 +786,7 @@ input[type=range]{width:100%}
     s.career.history.push({ school: s.school.name, from: s.ay });
     if (s.home.type === 'school') s.home = { type: 'flat', label: 'Rented flat', cost: 1700 };
     staffSchool(s);
-    s.stats.rep = clamp(s.stats.rep - 10);
+    s.stats.rep = clamp(s.stats.rep - (promoted ? 3 : 10));
     log(s, `You start at ${s.school.name}, ${s.school.town}.`, 'sys');
   }
   function respList(s) {
@@ -888,6 +922,8 @@ input[type=range]{width:100%}
     if (s.ht === 0) { s.ay++; s.me.age++; }
     newSection(s);
     if (s.ht === 0) newYear(s);
+    if (!s.over && s.ht === 2) generateAdverts(s);
+    if (s.ht === 0) s.adverts = [];
     if (s.over) return true;
     // 4. money
     const b = budget(s);
@@ -1050,7 +1086,7 @@ input[type=range]{width:100%}
     VISIBLE, HIDDEN, STAT_LABEL, HT, ROLES, LADDER, ENDINGS,
     rnd, ri, pick, chance, clamp, money, fmt, check, getVal,
     newGame, advance, choose, currentEvent, actions, doAction, personActions,
-    ladder, apply, respList, toggleResp, quals, startQual, salary, budget, netWorth, annualNet,
+    ladder, apply, advertList, applyAdvert, generateAdverts, respList, toggleResp, quals, startQual, salary, budget, netWorth, annualNet,
     setHoliday, housing, setHome, startEvent, forceEvent, sandboxSet, rewind, endGame,
     makeSchool, dispName, personRoleLabel, roleLabel, htLabel, myName, sport, byRole, makePerson, addPupil, workload,
   };
@@ -1067,16 +1103,19 @@ input[type=range]{width:100%}
   const D = root.PSL_DATA = {};
   // harder interviews for senior posts
   // Hambrook quietly rewards the pew; non-churchgoers are slightly penalised there
-  const RANKPEN = (s, ctx, P) => -P.ROLES[ctx.target].rank * 11 + P.traitSum(s, 'interview') + (s.school.id === 'hambrook' && !(ctx.newSchool) ? Math.min(30, (s.counters.pews || 0) * 1.5) - 8 : 0);
+  // Interview odds. Mudgrove promotes its own; Hambrook prefers outsiders (unless you sit in the right pew).
+  const schoolMod = (id, k) => { const t = D.schools.find(x => x.id === id); return (t && t.mods && t.mods[k]) || 0; };
+  const RANKPEN = (s, ctx, P) => -P.ROLES[ctx.target].rank * 11 - (ctx.target === 'Head' ? 12 : 0) + P.traitSum(s, 'interview')
+    + (ctx.newSchool ? -12 + schoolMod(ctx.newSchool.id, 'externalBonus') : schoolMod(s.school.id, 'internalBonus')) + (s.school.id === 'hambrook' && !(ctx.newSchool) ? Math.min(30, (s.counters.pews || 0) * 1.5) - 8 : 0);
 
   /* ---------- The four schools ---------- */
   D.schools = [
     { id: 'mudgrove', name: 'Mudgrove', nick: 'Mudders', town: 'in the Berkshire woods', boarding: true, gender: 'boys', prestige: 4,
-      blurb: 'Small, old-fashioned and close-knit. Handbells, Latin grace, a brilliant Head. Everyone is on the same team.',
-      crest: { fill: '#2f5d46', band: '#f1d38a', ink: '#f1d38a', letter: 'M' }, grudge: 'Hambrook', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 0.7, drainX: 1.0 } },
+      blurb: 'Small, old-fashioned and close-knit. Handbells, Latin grace, a brilliant Head. Everyone is on the same team, and the school promotes its own.',
+      crest: { fill: '#2f5d46', band: '#f1d38a', ink: '#f1d38a', letter: 'M' }, grudge: 'Hambrook', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 1.35, drainX: 1.0, internalBonus: 10, advertX: 0.35, externalBonus: -10 } },
     { id: 'hambrook', name: 'Hambrook', nick: 'Hambrook', town: 'near Ascot', boarding: true, gender: 'co-ed', prestige: 5,
-      blurb: 'Shiny, polished, famous parents. A Head who runs it like a CEO and an SLT barely keeping afloat.',
-      crest: { fill: '#e6eaf0', band: '#18233d', ink: '#18233d', letter: 'H' }, grudge: 'Mudgrove', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 1.2, drainX: 1.08 } },
+      blurb: 'Shiny, polished, famous parents. A Head who runs it like a CEO, an SLT barely keeping afloat, and a habit of hiring from outside.',
+      crest: { fill: '#e6eaf0', band: '#18233d', ink: '#18233d', letter: 'H' }, grudge: 'Mudgrove', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 0.6, drainX: 1.08, internalBonus: -6, advertX: 2.2, externalBonus: 8 } },
     { id: 'thornbury', name: 'Thornbury Court', nick: 'Thornbury', town: 'on the Wiltshire Downs', boarding: true, gender: 'co-ed', prestige: 3,
       blurb: 'Sport first, second and third. The Head of Games has more power than the Head.',
       crest: { fill: '#7a1f2b', band: '#ffffff', ink: '#ffffff', letter: 'T' }, grudge: 'Pelham Grange', mods: { payX: 1.0, moraleBase: 0, headRel: 50, staffRel: 52, vacX: 1.0, drainX: 1.05 } },
@@ -1125,6 +1164,7 @@ input[type=range]{width:100%}
     { id: 'wedding', emoji: '💒', title: 'Wedding bells', desc: 'Get married', test: s => !!s.flags.married },
     { id: 'goodboy', emoji: '🐕', title: 'Good boy', desc: 'Get a house dog', test: s => !!s.flags.dog },
     { id: 'howlers', emoji: '🏛️', title: 'Lost in translation', desc: 'Collect fifteen howlers', test: s => (s.fired.howler_latin || 0) + (s.fired.howler_french || 0) + (s.fired.howler_general || 0) >= 15 },
+    { id: 'hopper', emoji: '🪜', title: 'Ladder hopper', desc: 'Win a promotion by moving to another school', test: s => !!s.flags.promotedByMove },
     { id: 'beatrival', emoji: '🥇', title: 'One up', desc: 'Get promoted above your rival', test: s => !!s.flags.beatRival },
     { id: 'rivalboss', emoji: '😬', title: 'Awkward', desc: 'Your rival becomes your boss', test: s => !!s.flags.rival_above },
     { id: 'cameback', emoji: '🎓', title: 'They came back', desc: 'A former pupil returns', test: s => c_(s, 'alumniBack') >= 1 },
@@ -1390,7 +1430,7 @@ input[type=range]{width:100%}
         { label: 'Ask {matron} for directions', text: '{matron} walks you there and tells you which colleagues to avoid.', fx: { rel: { matron: 8 }, morale: 2 } },
       ] },
     { id: 'interview', manual: true, emoji: '🪑', title: 'Interview: {target}', tags: ['system', 'career'],
-      text: 'The panel for {target} sits in a row. {head} asks what you would change in your first year.',
+      text: (s, ctx) => ctx.newSchool ? 'You drive to {newschool} for the {target} interview. A panel of five, including two governors, asks what you would change in your first year.' : 'The panel for {target} sits in a row. {head} asks what you would change in your first year.',
       choices: [
         { label: '"Everything. It needs shaking up."', outcomes: [
           { w: 25, by: { charisma: 0.5, rep: 0.6, ambition: 0.4 }, wfn: RANKPEN, text: 'Bold. The panel loves it. You get the job.', fx: { promote: true, morale: 12, count: 'promotions' } },
@@ -2974,7 +3014,7 @@ input[type=range]{width:100%}
     <p style="text-align:left;font-size:14px"><b>Tap Next ½</b> to move on one half-term. Six per school year, from Michaelmas to the summer holidays.</p>
     <p style="text-align:left;font-size:14px"><b>Time.</b> You get four ⏱ each half-term. Spend them in Activities, People and Career.</p>
     <p style="text-align:left;font-size:14px"><b>Energy.</b> Your job drains it every half-term (see Workload). Holidays give some back. Let it hit zero and you burn out.</p>
-    <p style="text-align:left;font-size:14px"><b>Promotion.</b> Pass your two-year ECT induction, build Teaching and Reputation, then apply in Lent or early Summer when a post comes up.</p>
+    <p style="text-align:left;font-size:14px"><b>Promotion.</b> Pass your two-year ECT induction, build Teaching and Reputation, then apply in Lent or early Summer: for a post at your school when one comes up, or from the job adverts at other schools. Headships are always elsewhere.</p>
     <p style="text-align:left;font-size:14px"><b>Morale.</b> At 72%+ you're in the zone: less drain and better performance. Two half-terms in a row makes you Inspired (+1 Time). If Energy runs out while Morale is 70%+, you get one second wind a year. At 30% or below you're Jaded: more drain, and three jaded half-terms brings a crisis.</p>
     <p style="text-align:left;font-size:14px"><b>Hidden stats.</b> Patience, Organisation, Charisma, Ambition and Karma shape every outcome. You only see them at the end.</p>
     <p style="text-align:left;font-size:14px"><b>Schools.</b> Each school plays differently. Some reward things they never mention.</p>
@@ -3176,10 +3216,17 @@ input[type=range]{width:100%}
       ${c.role === 'ECT' ? `<div class="kv"><span>Induction</span><span>Teaching 38+ by end of year 2</span></div>` : ''}</div>`;
     const lad = P.ladder(S);
     h += `<div class="grp">Promotion</div>`;
-    if (!lad.length) h += `<div class="card" style="font-size:13.5px">${c.role === 'ECT' ? 'Pass your induction first.' : c.role === 'Head' ? 'You are at the top.' : 'No promotion routes from here.'}</div>`;
+    if (!lad.length) h += `<div class="card" style="font-size:13.5px">${c.role === 'ECT' ? 'Pass your induction first.' : c.role === 'Head' ? 'You are at the top.' : c.role === 'Deputy' ? 'Headships are always at another school. Watch the job adverts below.' : 'No internal promotion from here. Watch the job adverts below.'}</div>`;
     for (const L of lad) {
       const status = L.applied ? 'Applied this year' : !L.vacant ? 'No vacancy this year' : ![2, 3, 4].includes(S.ht) ? 'Applications: Lent and Summer ½1' : '';
       h += `<button class="item" data-apply="${L.role}" ${L.ok ? '' : 'disabled'}><span class="e">📈</span><span class="t"><b>Apply: ${esc(L.label)}${L.external ? ' (another school)' : ''}</b><small>${L.reqs.map(r => `<span class="req ${r.ok ? 'ok' : 'no'}">${r.ok ? '✓' : '✗'} ${esc(r.label)}</span>`).join('')}</small>${status ? `<small>${esc(status)}</small>` : ''}</span><span class="r"><b style="color:var(--green)">1 ⏱</b></span></button>`;
+    }
+    const ads = P.advertList(S);
+    h += `<div class="grp">Job adverts · other schools</div>`;
+    if (!ads.length) h += `<div class="card" style="font-size:13.5px">${[2, 3, 4].includes(S.ht) ? 'No adverts for your next step this year.' : 'New adverts appear at the start of the Lent term. Moving for a promotion costs less Reputation than a sideways move, and needs one year less experience.'}</div>`;
+    for (const a of ads) {
+      const status = a.applied ? 'Applied' : !a.valid ? 'No longer relevant' : ![2, 3, 4].includes(S.ht) ? 'Closed' : '';
+      h += `<button class="item" data-advert="${a.id}" ${a.ok ? '' : 'disabled'}><span class="e">📰</span><span class="t"><b>${esc(a.label)} · ${esc(a.school)}</b><small>${'★'.repeat(a.stars)} ${esc(a.blurb)}</small><small>${a.reqs.map(r => `<span class="req ${r.ok ? 'ok' : 'no'}">${r.ok ? '✓' : '✗'} ${esc(r.label)}</span>`).join('')}</small>${status ? `<small>${esc(status)}</small>` : ''}</span><span class="r"><b style="color:var(--green)">1 ⏱</b></span></button>`;
     }
     h += `<div class="grp">Responsibilities</div>`;
     for (const r of P.respList(S)) h += item({ e: r.emoji, t: r.label, s: `${r.sub} · −${r.drain} energy per half-term`, r: r.on ? 'Give up' : costTag(1, r.ok, r.why), attrs: `data-resp="${r.id}"`, dis: !r.ok, on: r.on });
@@ -3255,6 +3302,7 @@ input[type=range]{width:100%}
     sc.querySelectorAll('[data-pact]').forEach(b => b.onclick = () => { const r = P.doAction(S, b.dataset.pact, sheet.person); if (r && r.started) sheet = null; after(r); });
     sc.querySelectorAll('[data-person]').forEach(b => b.onclick = () => { sheet = { person: b.dataset.person }; render(); });
     sc.querySelectorAll('[data-apply]').forEach(b => b.onclick = () => { if (P.apply(S, b.dataset.apply)) { sheet = null; after(null); } });
+    sc.querySelectorAll('[data-advert]').forEach(b => b.onclick = () => { if (P.applyAdvert(S, b.dataset.advert)) { sheet = null; after(null); } });
     sc.querySelectorAll('[data-resp]').forEach(b => b.onclick = () => { P.toggleResp(S, b.dataset.resp); after(null); });
     sc.querySelectorAll('[data-qual]').forEach(b => b.onclick = () => { P.startQual(S, b.dataset.qual); after(null); });
     sc.querySelectorAll('[data-hol]').forEach(b => b.onclick = () => { P.setHoliday(S, b.dataset.hol); after(null); });
