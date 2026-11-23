@@ -32,14 +32,7 @@
   };
   const save = () => { if (S) store.set(SAVE, S); };
   const SETTINGS = 'psl.settings.v1', ACH = 'psl.ach.v1', META = 'psl.meta.v1';
-  const settings = Object.assign({ sound: true, theme: 'light', live: false }, store.get(SETTINGS) || {});
-  const liveOK = () => !!(window.PSL_LIVE && window.PSL_LIVE.supported()) && !NATIVE;
-  const liveOn = () => settings.live && liveOK();
-  const UIAPI = {
-    getS: () => S, save: () => save(), checkAch: () => checkAch(), chime: k => chime(k), render: () => render(),
-    openSheet: tab => { sheet = { tab }; render(); },
-    exitLive: () => { settings.live = false; store.set(SETTINGS, settings); if (window.PSL_LIVE) PSL_LIVE.stop(); render(); },
-  };
+  const settings = Object.assign({ sound: true, theme: 'light' }, store.get(SETTINGS) || {});
   function applyTheme() {
     const dark = settings.theme === 'dark' || (settings.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
     document.body.classList.toggle('dark', !!dark);
@@ -104,7 +97,6 @@
     <p style="text-align:left;font-size:14px"><b>Morale.</b> At 72%+ you're in the zone: less drain and better performance. Two half-terms in a row makes you Inspired (+1 Time). If Energy runs out while Morale is 70%+, you get one second wind a year. At 30% or below you're Jaded: more drain, and three jaded half-terms brings a crisis.</p>
     <p style="text-align:left;font-size:14px"><b>Hidden stats.</b> Patience, Organisation, Charisma, Ambition and Karma shape every outcome. You only see them at the end.</p>
     <p style="text-align:left;font-size:14px"><b>Schools.</b> Each school plays differently. Some reward things they never mention.</p>
-    <p style="text-align:left;font-size:14px"><b>Live mode (desktop).</b> Press 🎮 Live to walk round your school: doors, people, the bell tower and events as scenes. J or Esc gets you back here.</p>
     <p style="text-align:left;font-size:13px;color:var(--muted)">Tap your crest for the sandbox: edit stats, fire events, rewind time.</p>
     <button class="choice" id="helpok">Ring the bell</button></div>`;
   function showHelp() { const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = HELP; $app.appendChild(m); m.querySelector('#helpok').onclick = () => { S.helpSeen = true; save(); render(); }; }
@@ -129,7 +121,6 @@
       <div id="blurb" style="font-size:12.5px;opacity:.75;margin-top:6px;min-height:34px"></div>
       <button class="btn" id="go">Start a career</button>
       <button class="btn ghost" id="rand">Random teacher</button>
-      ${liveOK() ? `<button class="btn ghost" id="livetog">🎮 Live mode (desktop): ${settings.live ? 'on' : 'off'}</button>` : ''}
       <button class="btn ghost" id="achbtn">🏅 Achievements · ${Object.keys(got).length} of ${D.achievements.length}</button>
       <div class="two" style="margin-top:10px"><button class="btn ghost" style="margin:0" id="sndbtn">${settings.sound ? '🔔 Sound on' : '🔕 Sound off'}</button><button class="btn ghost" style="margin:0" id="thmbtn">${{ light: '☀️ Light', dark: '🌙 Dark', auto: '🌓 Auto' }[settings.theme]}</button></div>
       <p style="font-size:12px;opacity:.55;text-align:center;margin-top:18px">v1.1 · ${D.events.length} events · 4 schools${NATIVE ? '' : '<br>On iPhone: open in Safari, tap Share, then Add to Home Screen.'}</p>
@@ -146,7 +137,6 @@
     });
     document.getElementById('go').onclick = () => begin({ first: v('f'), last: v('l'), title: v('t'), gender: v('g'), subject: v('s'), age: +v('a') || undefined, school: v('sc'), traits: picked.slice() });
     document.getElementById('achbtn').onclick = renderAchPage;
-    const lt = document.getElementById('livetog'); if (lt) lt.onclick = () => { settings.live = !settings.live; store.set(SETTINGS, settings); renderStart(); };
     document.getElementById('sndbtn').onclick = () => { settings.sound = !settings.sound; store.set(SETTINGS, settings); if (settings.sound) chime('bell'); renderStart(); };
     document.getElementById('thmbtn').onclick = () => { settings.theme = { light: 'dark', dark: 'auto', auto: 'light' }[settings.theme]; store.set(SETTINGS, settings); applyTheme(); renderStart(); };
     const sc = document.getElementById('sc'), bl = document.getElementById('blurb');
@@ -170,7 +160,6 @@
 
   /* ---------------- Main game ---------------- */
   function render() {
-    if (window.PSL_LIVE) PSL_LIVE.stop();
     if (!S) return renderStart();
     if (S.over) return renderEnd();
     const st = S.stats, drain = Math.round(P.workload(S));
@@ -182,7 +171,7 @@
       <div class="hdr">
         <button class="crest" id="sandbox" aria-label="Sandbox">${crestFor(S.school).svg}<span style="color:${crestFor(S.school).ink}">${esc(crestFor(S.school).letter)}</span></button>
         <div class="who"><b>${esc(P.myName(S))}</b><small>${esc(P.roleLabel(S))}${S.career.team && S.flags.coach ? ' · ' + esc(S.career.team) + ' coach' : ''}</small><small>${esc(S.school.name)}</small></div>
-        <div class="purse">Age ${S.me.age}${liveOK() ? '<button class="livebtn" id="golive">🎮 Live</button>' : ''}<b>${P.money(S.money)}</b></div>
+        <div class="purse">Age ${S.me.age}<b>${P.money(S.money)}</b></div>
       </div>
       <div class="stats">${statHTML}
         <div class="timebar"><span class="pips">Time ${pips}${(m => m ? `<span class="chip" title="${esc(m.tip)}">${esc(m.label)}</span>` : '')(P.mood(S))}</span><span class="${danger ? 'warn' : ''}">Workload −${drain} energy${danger ? ' ⚠️' : ''}</span></div>
@@ -200,11 +189,9 @@
     $app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { sheet = { tab: b.dataset.tab }; render(); });
     document.getElementById('next').onclick = () => { haptic('light'); chime('bell'); if (P.advance(S)) { scrollBottom = true; save(); render(); } };
     document.getElementById('sandbox').onclick = () => { sheet = { tab: 'sandbox' }; render(); };
-    const gl = document.getElementById('golive'); if (gl) gl.onclick = () => { settings.live = true; store.set(SETTINGS, settings); render(); };
     if (!S.helpSeen) return showHelp();
     checkAch();
     if (S.reviewPending) return showReview();
-    if (liveOn() && !sheet && !result) { PSL_LIVE.start(UIAPI); return; }
     if (sheet) renderSheet();
     if (result) renderResult();
     else if (S.pending.length) renderEvent();
