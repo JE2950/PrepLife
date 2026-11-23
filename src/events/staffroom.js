@@ -209,7 +209,7 @@
     { id: 'head_lonely', emoji: '🕯️', title: 'At the top', tags: ['career', 'head'], when: { role: 'Head' }, weight: 5, cooldown: 12,
       text: 'You realise the common room goes quiet when you walk in. It used to be you making them laugh.', fx: { morale: -5 } },
     { id: 'head_hambrook_board', emoji: '💼', title: 'The Board', tags: ['career', 'head', 'school'], when: { role: 'Head', school: 'hambrook' }, weight: 8, cooldown: 6,
-      text: 'The Hambrook board want "a growth strategy for the brand", including a satellite school in Dubai.',
+      text: 'The Ravelstone board want "a growth strategy for the brand", including a satellite school in Dubai.',
       choices: [
         { label: 'Champion it', text: 'You fly to Dubai twice in a term. The common room stops recognising you.', fx: { rep: 6, energy: -10, morale: -3 } },
         { label: 'Push back', outcomes: [
@@ -217,6 +217,6 @@
           { w: 1, text: 'The board thank you for your input and proceed anyway.', fx: { morale: -6 } } ] },
       ] },
     { id: 'head_mudders_dog', emoji: '🐕', title: 'The Head\'s dog', tags: ['career', 'head', 'school'], when: { role: 'Head', school: 'mudgrove' }, weight: 8, cooldown: 6,
-      text: 'At Mudders, the Head walks the dogs round the lake every morning. The boys now ask you about their problems on the walk.', fx: { morale: 6, karma: 2, rep: 2 } },
+      text: 'At Wickers, the Head walks the dogs round the lake every morning. The boys now ask you about their problems on the walk.', fx: { morale: 6, karma: 2, rep: 2 } },
   );
 })(typeof window !== 'undefined' ? window : globalThis);

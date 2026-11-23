@@ -20,7 +20,7 @@ With a free Apple ID the app runs for 7 days before you need to press Run again;
 After changing any game code, run `python3 build.py`. It rebuilds `index.html` and copies it into the app at `ios/PrepLife/Resources/`.
 
 ## Features
-- Four schools: Mudgrove ("Mudders"), Hambrook, Thornbury Court and Larkspur House, each with its own culture and hidden rules
+- Four schools: Wickenden Manor ("Wickers"), Ravelstone, Thornbury Court and Larkspur House, each with its own culture and hidden rules
 - Career ladder from ECT to Head, with vacancies, interviews, responsibilities and qualifications
 - Visible stats (Morale, Energy, Teaching, Reputation) and hidden ones (Patience, Organisation, Charisma, Ambition, Karma)
 - 198 hand-written events, pupil types, relationships, family life, honours at the end of each career

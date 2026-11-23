@@ -442,7 +442,7 @@
         <div class="kv"><span>Pupils waved off</span><span>${e.leavers}</span></div>
         <div class="kv"><span>Net worth</span><span>${P.money(e.money)}</span></div>
       </div>
-      <div class="card" style="text-align:left"><h3>What they never told you</h3>${hid}${e.hambrook ? `<div class="kv"><span>Sundays in the Hambrook pew</span><b>${e.pews}</b></div><div style="font-size:12.5px;color:var(--muted);margin-top:6px">${e.pews >= 6 ? 'At Hambrook, the road to SLT ran through St Michael\'s. You found it.' : 'At Hambrook, the road to SLT ran through St Michael\'s. Now you know.'}</div>` : ''}</div>
+      <div class="card" style="text-align:left"><h3>What they never told you</h3>${hid}${e.hambrook ? `<div class="kv"><span>Sundays in the Ravelstone pew</span><b>${e.pews}</b></div><div style="font-size:12.5px;color:var(--muted);margin-top:6px">${e.pews >= 6 ? 'At Ravelstone, the road to SLT ran through St Michael\'s. You found it.' : 'At Ravelstone, the road to SLT ran through St Michael\'s. Now you know.'}</div>` : ''}</div>
       <button class="btn" id="again">New career</button>
       <button class="btn ghost" style="color:var(--navy);border-color:var(--line)" id="journal">Read the journal</button>
     </div></div>`;

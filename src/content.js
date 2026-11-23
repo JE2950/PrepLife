@@ -4,20 +4,20 @@
   'use strict';
   const D = root.PSL_DATA = {};
   // harder interviews for senior posts
-  // Hambrook quietly rewards the pew; non-churchgoers are slightly penalised there
-  // Interview odds. Mudgrove promotes its own; Hambrook prefers outsiders (unless you sit in the right pew).
+  // Ravelstone quietly rewards the pew; non-churchgoers are slightly penalised there
+  // Interview odds. Wickenden Manor promotes its own; Ravelstone prefers outsiders (unless you sit in the right pew).
   const schoolMod = (id, k) => { const t = D.schools.find(x => x.id === id); return (t && t.mods && t.mods[k]) || 0; };
   const RANKPEN = (s, ctx, P) => -P.ROLES[ctx.target].rank * 11 - (ctx.target === 'Head' ? 12 : 0) + P.traitSum(s, 'interview')
     + (ctx.newSchool ? -12 + schoolMod(ctx.newSchool.id, 'externalBonus') : schoolMod(s.school.id, 'internalBonus')) + (s.school.id === 'hambrook' && !(ctx.newSchool) ? Math.min(30, (s.counters.pews || 0) * 1.5) - 8 : 0);
 
   /* ---------- The four schools ---------- */
   D.schools = [
-    { id: 'mudgrove', name: 'Mudgrove', nick: 'Mudders', town: 'in the Berkshire woods', boarding: true, gender: 'boys', prestige: 4,
+    { id: 'mudgrove', name: 'Wickenden Manor', nick: 'Wickers', town: 'in the Berkshire woods', boarding: true, gender: 'boys', prestige: 4,
       blurb: 'Small, old-fashioned and close-knit. Handbells, Latin grace, a brilliant Head. Everyone is on the same team, and the school promotes its own.',
-      crest: { fill: '#2f5d46', band: '#f1d38a', ink: '#f1d38a', letter: 'M' }, grudge: 'Hambrook', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 1.35, drainX: 1.0, internalBonus: 10, advertX: 0.35, externalBonus: -10 } },
-    { id: 'hambrook', name: 'Hambrook', nick: 'Hambrook', town: 'near Ascot', boarding: true, gender: 'co-ed', prestige: 5,
+      crest: { fill: '#2f5d46', band: '#f1d38a', ink: '#f1d38a', letter: 'W' }, grudge: 'Ravelstone', mods: { payX: 0.96, moraleBase: 7, headRel: 70, staffRel: 62, vacX: 1.35, drainX: 1.0, internalBonus: 10, advertX: 0.35, externalBonus: -10 } },
+    { id: 'hambrook', name: 'Ravelstone', nick: 'Ravelstone', town: 'near Ascot', boarding: true, gender: 'co-ed', prestige: 5,
       blurb: 'Shiny, polished, famous parents. A Head who runs it like a CEO, an SLT barely keeping afloat, and a habit of hiring from outside.',
-      crest: { fill: '#e6eaf0', band: '#18233d', ink: '#18233d', letter: 'H' }, grudge: 'Mudgrove', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 0.6, drainX: 1.08, internalBonus: -6, advertX: 2.2, externalBonus: 8 } },
+      crest: { fill: '#e6eaf0', band: '#18233d', ink: '#18233d', letter: 'R' }, grudge: 'Wickenden Manor', mods: { payX: 1.08, moraleBase: -6, headRel: 35, headDrift: 35, staffRel: 47, vacX: 0.6, drainX: 1.08, internalBonus: -6, advertX: 2.2, externalBonus: 8 } },
     { id: 'thornbury', name: 'Thornbury Court', nick: 'Thornbury', town: 'on the Wiltshire Downs', boarding: true, gender: 'co-ed', prestige: 3,
       blurb: 'Sport first, second and third. The Head of Games has more power than the Head.',
       crest: { fill: '#7a1f2b', band: '#ffffff', ink: '#ffffff', letter: 'T' }, grudge: 'Pelham Grange', mods: { payX: 1.0, moraleBase: 0, headRel: 50, staffRel: 52, vacX: 1.0, drainX: 1.05 } },
@@ -52,9 +52,9 @@
     { id: 'mallet', emoji: '🔨', title: 'Mallet master', desc: 'Win a croquet trophy', test: s => c_(s, 'croquetCups') >= 1 },
     { id: 'lawn', emoji: '🏆', title: 'Lord of the Lawn', desc: 'Win three croquet trophies in one career', test: s => c_(s, 'croquetCups') >= 3 },
     { id: 'enemy', emoji: '⚔️', title: 'Old enemy', desc: 'Win the grudge match', test: s => c_(s, 'grudgeWins') >= 1 },
-    { id: 'hamsacked', emoji: '📦', title: 'Not Hambrook material', desc: 'Get sacked from Hambrook', test: s => s.over && s.ending && s.ending.id === 'sacked' && s.school.id === 'hambrook' },
-    { id: 'pew', emoji: '⛪', title: 'Pillar of the parish', desc: 'Twenty Sundays in the Hambrook pew', test: s => c_(s, 'pews') >= 20 },
-    { id: 'mudders', emoji: '🌧️', title: 'Mudders through and through', desc: 'Twenty-five years at Mudgrove', test: s => s.school.id === 'mudgrove' && s.career.yearsAtSchool >= 25 },
+    { id: 'hamsacked', emoji: '📦', title: 'Not Ravelstone material', desc: 'Get sacked from Ravelstone', test: s => s.over && s.ending && s.ending.id === 'sacked' && s.school.id === 'hambrook' },
+    { id: 'pew', emoji: '⛪', title: 'Pillar of the parish', desc: 'Twenty Sundays in the Ravelstone pew', test: s => c_(s, 'pews') >= 20 },
+    { id: 'mudders', emoji: '🌧️', title: 'Wickers through and through', desc: 'Twenty-five years at Wickenden Manor', test: s => s.school.id === 'mudgrove' && s.career.yearsAtSchool >= 25 },
     { id: 'larkhead', emoji: '🥁', title: 'Radical kindness from the top', desc: 'Become Head of Larkspur House', test: s => s.school.id === 'larkspur' && s.career.role === 'Head' },
     { id: 'thornhead', emoji: '🏉', title: 'Games first', desc: 'Become Head of Thornbury Court', test: s => s.school.id === 'thornbury' && s.career.role === 'Head' },
     { id: 'inspired', emoji: '✨', title: 'Inspired', desc: 'Become inspired', test: s => c_(s, 'inspired') >= 1 },
@@ -301,7 +301,7 @@
     { id: 'burnt', emoji: '🕯️', title: 'Burnt Candle', text: 'You gave everything until there was nothing left.', test: (s, e) => e === 'burnout' },
     { id: 'disgrace', emoji: '📦', title: 'Cardboard Box', text: 'Asked to leave.', test: (s, e) => e === 'sacked' },
     { id: 'head', emoji: '👑', title: 'The Head', text: 'You reached the top of the tree.', test: s => s.career.peak === 'Head' },
-    { id: 'pew', emoji: '⛪', title: 'Pillar of St Michael\'s', text: 'You found the side door to the Hambrook SLT. It was in the vestry.', test: s => (s.counters.pews || 0) >= 20 },
+    { id: 'pew', emoji: '⛪', title: 'Pillar of St Michael\'s', text: 'You found the side door to the Ravelstone SLT. It was in the vestry.', test: s => (s.counters.pews || 0) >= 20 },
     { id: 'croquet', emoji: '🔨', title: 'Lord of the Lawn', text: 'Your croquet teams terrorised the prep school circuit.', test: s => (s.counters.croquetCups || 0) >= 3 },
     { id: 'grudge', emoji: '⚔️', title: 'Grudge Bearer', text: 'You beat the old enemy, again and again.', test: s => (s.counters.grudgeWins || 0) >= 5 },
     { id: 'chips', emoji: '📚', title: 'Mr Chips', text: 'One school, a whole career.', test: s => s.career.yearsAtSchool >= 25 },

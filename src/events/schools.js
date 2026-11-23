@@ -1,13 +1,13 @@
-/* The four schools: flavour events, plus the Hambrook pew (drip-fed, never stated) */
+/* The four schools: flavour events, plus the Ravelstone pew (drip-fed, never stated) */
 (function (root) {
   'use strict';
   const D = root.PSL_DATA;
   const pews = s => s.counters.pews || 0;
 
   D.events.push(
-    /* ---------- Mudgrove ("Mudders") ---------- */
-    { id: 'mud_arrive', emoji: '🔔', title: 'Mudders', tags: ['school'], when: { school: 'mudgrove' }, once: true, weight: 60,
-      text: 'Mudgrove still has a handbell, a Latin grace before lunch and a Head who knows every boy\'s dog by name. Everyone calls it Mudders.', fx: { morale: 3 } },
+    /* ---------- Wickenden Manor ("Wickers") ---------- */
+    { id: 'mud_arrive', emoji: '🔔', title: 'Wickers', tags: ['school'], when: { school: 'mudgrove' }, once: true, weight: 60,
+      text: 'Wickenden Manor still has a handbell, a Latin grace before lunch and a Head who knows every boy\'s dog by name. Everyone calls it Wickers.', fx: { morale: 3 } },
     { id: 'mud_sunshine', emoji: '☀️', title: 'Half holiday', tags: ['school'], when: { school: 'mudgrove', season: 'summer', has: 'head' }, weight: 8, cooldown: 6,
       text: '{head} cancels afternoon lessons because the sun has come out. The whole school goes down to the river.', fx: { morale: 7, energy: 4 } },
     { id: 'mud_grace', emoji: '🍽️', title: 'Grace', tags: ['school'], when: { school: 'mudgrove' }, weight: 6, cooldown: 18,
@@ -29,11 +29,11 @@
         { label: '"Just this, really"', text: '{head} smiles. "Good. We need people who stay."', fx: { rel: { head: 5 }, morale: 3 } },
       ] },
 
-    /* ---------- Hambrook ---------- */
-    { id: 'ham_arrive', emoji: '✨', title: 'Hambrook', tags: ['school'], when: { school: 'hambrook' }, once: true, weight: 60,
-      text: 'Hambrook has a new sports centre, a branded water bottle for every pupil and a car park full of Range Rovers. You have not yet met the Head.', fx: { morale: -1 } },
-    { id: 'ham_vision', emoji: '📊', title: 'Hambrook 2.0', tags: ['school', 'commonroom'], when: { school: 'hambrook', has: 'head' }, weight: 7, cooldown: 12,
-      text: '{head} presents the new five-year strategy at INSET. The slides say "Hambrook 2.0". You count the word "excellence" fourteen times.',
+    /* ---------- Ravelstone ---------- */
+    { id: 'ham_arrive', emoji: '✨', title: 'Ravelstone', tags: ['school'], when: { school: 'hambrook' }, once: true, weight: 60,
+      text: 'Ravelstone has a new sports centre, a branded water bottle for every pupil and a car park full of Range Rovers. You have not yet met the Head.', fx: { morale: -1 } },
+    { id: 'ham_vision', emoji: '📊', title: 'Ravelstone 2.0', tags: ['school', 'commonroom'], when: { school: 'hambrook', has: 'head' }, weight: 7, cooldown: 12,
+      text: '{head} presents the new five-year strategy at INSET. The slides say "Ravelstone 2.0". You count the word "excellence" fourteen times.',
       choices: [
         { label: 'Ask a sharp question', outcomes: [
           { w: 1, by: { charisma: 0.4 }, text: 'Your question gets a laugh from the room and a note in {head}\'s pad.', fx: { rep: 2, rel: { head: -4 }, morale: 2 } },

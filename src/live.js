@@ -674,8 +674,8 @@
       // slim modern clock tower
       R(444, FLOOR - 150, 22, 66, st.wall2); R(442, FLOOR - 154, 26, 5, st.roof); R(447, FLOOR - 140, 16, 10, '#111'); txt(hhmm(liveState().minute), 447, FLOOR - 139, '#5fdc7a');
       R(448, FLOOR - 126, 14, 30, night ? '#f3d27a' : '#9fd0e6');
-      for (const [x, c] of [[256, cr.band], [664, cr.band]]) { R(x, FLOOR - 120, 2, 36, '#bbb'); R(x + 2, FLOOR - 120, 12, 18, c); txt('H', x + 5, FLOOR - 116, '#fff'); }
-      R(300, FLOOR - 98, 120, 10, '#18233d'); txt('HAMBROOK · EXCELLENCE', 304, FLOOR - 97, '#e6eaf0');
+      for (const [x, c] of [[256, cr.band], [664, cr.band]]) { R(x, FLOOR - 120, 2, 36, '#bbb'); R(x + 2, FLOOR - 120, 12, 18, c); txt('R', x + 5, FLOOR - 116, '#fff'); }
+      R(300, FLOOR - 98, 120, 10, '#18233d'); txt('RAVELSTONE · EXCELLENCE', 304, FLOOR - 97, '#e6eaf0');
       for (const x of [250, 330, 600, 670]) { R(x, FLOOR - 10, 10, 10, '#4f8a3c'); R(x + 2, FLOOR - 14, 6, 4, '#3f7330'); }
     }
     if (st.arty) {
@@ -737,7 +737,7 @@
     }
     if (st.modern) {
       R(0, 12, W, 2, '#c9ced6');
-      if (['classroom', 'hall', 'commonroom', 'study'].includes(id)) { R(id === 'classroom' ? 290 : 150, 36, 70, 40, '#111'); R(id === 'classroom' ? 292 : 152, 38, 66, 36, '#2a4a6a'); txt('HAMBROOK', (id === 'classroom' ? 296 : 156), 42, '#e6eaf0'); txt('2.0', (id === 'classroom' ? 296 : 156), 52, cr.band === '#18233d' ? '#9fd0e6' : '#fff'); }
+      if (['classroom', 'hall', 'commonroom', 'study'].includes(id)) { R(id === 'classroom' ? 290 : 150, 36, 70, 40, '#111'); R(id === 'classroom' ? 292 : 152, 38, 66, 36, '#2a4a6a'); txt('RAVELSTONE', (id === 'classroom' ? 296 : 156), 42, '#e6eaf0'); txt('2.0', (id === 'classroom' ? 296 : 156), 52, cr.band === '#18233d' ? '#9fd0e6' : '#fff'); }
       R(380, FLOOR - 30, 12, 30, '#4f8a3c'); R(382, FLOOR - 40, 8, 10, '#3f7330'); R(379, FLOOR - 8, 14, 8, '#e6e6e6');
       if (id === 'reception') { R(250, FLOOR - 50, 10, 16, '#2a2a2a'); R(252, FLOOR - 44, 6, 4, '#8a5a3a'); txt('COFFEE', 246, FLOOR - 58, '#18233d'); }
     }

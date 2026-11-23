@@ -390,7 +390,7 @@
         { label: 'Find a way to say yes', text: '{par.child} moves up. The 1st XI coach resigns in protest.', fx: { rel: { par: 12 }, sch: { finance: 4, staff: -8 }, karma: -4 } },
       ] },
     { id: 'head_poached', emoji: '🎣', title: 'Poached', tags: ['head'], when: { role: 'Head', notSchool: 'hambrook' }, cast: { col: 'colleague' }, weight: 5, cooldown: 12,
-      text: 'Hambrook have offered {col}, one of your best teachers, a job with a £6,000 pay rise.',
+      text: 'Ravelstone have offered {col}, one of your best teachers, a job with a £6,000 pay rise.',
       choices: [
         { label: 'Match the offer', text: '{col} stays. The Bursar reminds you, at length, that this sets a precedent.', fx: { rel: { col: 15 }, sch: { finance: -4, staff: 2 } } },
         { label: 'Offer a promotion instead', text: '{col} stays as Head of Year, delighted. It costs less than money.', fx: { rel: { col: 12 }, sch: { finance: -1, staff: 3 } } },
